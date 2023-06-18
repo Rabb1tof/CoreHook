@@ -3,6 +3,10 @@
 using CoreHook.BinaryInjection;
 using CoreHook.Helpers;
 
+using Microsoft.Extensions.Logging;
+
+using Moq;
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -147,8 +151,9 @@ internal static class Resources
     internal static void InjectDllIntoTarget(Process target, string injectionLibrary, string injectionPipeName, params object[] remoteArguments)
     {
         var (coreRootPath, coreLoadLibrary, _, _, _) = ModulesPathHelper.GetCoreLoadPaths(false);
+        var logger = Mock.Of<ILogger>();
 
-        using var injector = new RemoteInjector(target.Id, null, injectionPipeName);
+        using var injector = new RemoteInjector(target.Id, null, injectionPipeName, logger);
         injector.Inject(injectionLibrary, "", new Managed.NetHostStartArguments(coreLoadLibrary, coreRootPath, false, null));
 
     }

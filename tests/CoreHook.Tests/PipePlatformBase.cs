@@ -1,10 +1,13 @@
 ﻿using System.IO.Pipes;
+
 using CoreHook.IPC.Platform;
 
 namespace CoreHook.Tests;
 
-public class PipePlatformBase : IPipePlatform
+internal class PipePlatformBase : IPipePlatform
 {
+    public static PipePlatformBase Instance { get; } = new PipePlatformBase();
+
     public NamedPipeServerStream CreatePipeByName(string pipeName, string serverName)
     {
         return new NamedPipeServerStream(

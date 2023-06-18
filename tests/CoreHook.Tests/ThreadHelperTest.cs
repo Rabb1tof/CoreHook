@@ -10,9 +10,7 @@ public partial class ThreadHelperTest
     [Fact]
     public void ShouldOpenProcessHandleForCurrentProcess()
     {
-        using (var processHandle = new ManagedProcess(Process.GetCurrentProcess()).SafeHandle)
-        {
-            Assert.NotEqual(true, processHandle.IsInvalid);
-        }
+        using var processHandle = new ManagedProcess(Process.GetCurrentProcess()).SafeHandle;
+        Assert.NotEqual(true, processHandle.IsInvalid);
     }
 }

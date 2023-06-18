@@ -1,5 +1,6 @@
 ﻿using CoreHook.EntryPoint;
-using CoreHook.IPC.Messages;
+
+using Microsoft.Extensions.Logging;
 
 using System;
 using System.Diagnostics;
@@ -8,7 +9,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace CoreHook.Loader;
@@ -55,9 +55,10 @@ public class PluginLoader
             var resolver = new DependencyResolver(payLoad.UserLibrary);
 
             // Execute the plugin library's entry point and pass in the user arguments.
-            var t = LoadPlugin(resolver.Assembly, payLoad.UserParams, hostNotifier);
-            t.Wait();
-            return (int)t.Result;
+            var loadPluginTask = LoadPlugin(resolver.Assembly, payLoad.UserParams, hostNotifier);
+            loadPluginTask.Wait();
+
+            return (int)loadPluginTask.Result;
         }
         catch (ArgumentOutOfRangeException outOfRangeEx)
         {
@@ -82,13 +83,13 @@ public class PluginLoader
         var entryPoint = FindEntryPoint(assembly);
         if (entryPoint is null)
         {
-            Log(hostNotifier, new ArgumentException($"Assembly {assembly.FullName} doesn't contain any exposed type implementing {EntryPointInterface}."));
+            LogAndThrow(hostNotifier, new ArgumentException($"Assembly {assembly.FullName} doesn't contain any exposed type implementing {EntryPointInterface}."));
         }
 
         var runMethod = FindMatchingMethod(entryPoint, EntryPointMethodName, paramArray);
         if (runMethod is null)
         {
-            Log(hostNotifier, new MissingMethodException($"Failed to find the 'Run' function with {paramArray.Length} parameter(s) in {assembly.FullName}."));
+            LogAndThrow(hostNotifier, new MissingMethodException($"Failed to find the 'Run' function with {paramArray.Length} parameter(s) in {assembly.FullName}."));
         }
 
         _ = hostNotifier.Log("Found entry point, initializing plugin class.");
@@ -96,7 +97,7 @@ public class PluginLoader
         var instance = InitializeInstance(entryPoint, paramArray);
         if (instance is null)
         {
-            Log(hostNotifier, new MissingMethodException($"Failed to find the constructor {entryPoint.Name} in {assembly.FullName}"));
+            LogAndThrow(hostNotifier, new MissingMethodException($"Failed to find the constructor {entryPoint.Name} in {assembly.FullName}"));
         }
         _ = hostNotifier.Log("Plugin successfully initialized. Executing the plugin entry point.");
 
@@ -194,9 +195,9 @@ public class PluginLoader
     /// </summary>
     /// <param name="notifier">Communication helper to send messages to the host application.</param>
     /// <param name="e">The exception that occurred.</param>
-    private static void Log(NotificationHelper notifier, Exception e)
+    private static void LogAndThrow(NotificationHelper notifier, Exception e)
     {
-        notifier.Log(e.Message, LogLevel.Error);
+        _ = notifier.Log(e.Message, LogLevel.Error);
         throw e;
     }
 }

@@ -2,7 +2,6 @@
 using System.IO;
 using System.IO.Pipes;
 using System.Security.Principal;
-using System.Threading;
 
 namespace CoreHook.IPC.NamedPipes;
 
@@ -11,7 +10,7 @@ namespace CoreHook.IPC.NamedPipes;
 /// </summary>
 public class NamedPipeClient : NamedPipeBase
 {
-    public NamedPipeClient(string pipeName, bool connect = false) 
+    public NamedPipeClient(string pipeName, bool connect = true) 
     {
         _pipeName = pipeName;
 

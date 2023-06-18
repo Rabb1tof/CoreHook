@@ -1,8 +1,10 @@
-﻿using CoreHook.HookDefinition;
+﻿using CoreHook.BinaryInjection;
+using CoreHook.HookDefinition;
 using CoreHook.IPC.Messages;
 using CoreHook.IPC.NamedPipes;
-using CoreHook.IPC.Platform;
 using CoreHook.Uwp.FileMonitor.Hook;
+
+using Microsoft.Extensions.Logging;
 
 using System;
 using System.IO;
@@ -14,6 +16,9 @@ namespace CoreHook.Uwp.FileMonitor;
 
 class Program
 {
+    private static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+    private static readonly ILogger logger = loggerFactory.CreateLogger<Program>();
+
     /// <summary>
     /// The library to be injected into the target process and executed
     /// using it's 'Run' Method.
@@ -24,11 +29,6 @@ class Program
     /// The name of the communication pipe that will be used for this program
     /// </summary>
     private const string PipeName = "FileMonitorUwpHookPipe";
-    
-    /// <summary>
-    /// Class that handles creating a named pipe server for communicating with the target process.
-    /// </summary>
-    private static readonly IPipePlatform PipePlatform = new PipePlatform();
 
     /// <summary>
     /// Security Identifier representing ALL_APPLICATION_PACKAGES permission.
@@ -93,26 +93,21 @@ class Program
             targetProcessId = LaunchAppxPackage(targetApp);
         }
 
-        // Inject the FileMonitor.Hook dll into the process.
-        RemoteHook.InjectDllIntoTarget(targetProcessId, injectionLibrary, PipePlatform, true, PipeName);
+        // Class that handles creating a named pipe server for communicating with the target process.
+        var pipePlatform = new PipePlatform();
 
         // Start the RPC server for handling requests from the hooked app.
-        StartListener();
-    }
-
-    /// <summary>
-    /// Create an RPC server that is called by the RPC client started in a target process.
-    /// </summary>
-    private static void StartListener()
-    {
-        using var server = new NamedPipeServer(PipeName, IPipePlatform.Default, handleRequest);
-
+        using var server = new NamedPipeServer(PipeName, pipePlatform, HandleRequest, logger);
         Console.WriteLine($"Now listening on {PipeName}.");
+
+        // Inject the FileMonitor.Hook dll into the process.
+        RemoteHook.InjectDllIntoTarget(targetProcessId, injectionLibrary, logger, pipePlatform, true, PipeName);
+
         Console.WriteLine("Press Enter to quit.");
         Console.ReadLine();
     }
 
-    private static void handleRequest(CustomMessage obj)
+    private static void HandleRequest(INamedPipe _, CustomMessage obj)
     {
         if (obj is CreateFileMessage message)
         {

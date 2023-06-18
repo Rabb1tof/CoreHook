@@ -1,8 +1,11 @@
 ﻿using CoreHook.IPC.Messages;
 using CoreHook.IPC.Platform;
 
+using Microsoft.Extensions.Logging;
+
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace CoreHook.IPC.NamedPipes;
 
@@ -11,43 +14,33 @@ namespace CoreHook.IPC.NamedPipes;
 /// </summary>
 public class NamedPipeServer : NamedPipeBase
 {
-    private readonly Action<INamedPipe>? _handleConnection;
+    private readonly ILogger _logger;
 
-    protected string _pipeName;
+    private readonly Action<INamedPipe, CustomMessage> _handleMessage;
 
     private readonly IPipePlatform _platform;
 
     private bool _connectionStopped;
 
     /// <summary>
-    /// Initialize a new instance of the <see cref="NamedPipeServer"/> class.
-    /// </summary>
-    /// <param name="pipeName">The name of the pipe server.</param>
-    /// <param name="platform">Method for initializing a new pipe-based server.</param>
-    /// <param name="handleConnection">Event handler called when receiving a new connection.</param>
-    public NamedPipeServer(string pipeName, IPipePlatform platform, Action<INamedPipe>? handleConnection = null)
-    {
-        _pipeName = pipeName;
-        _platform = platform;
-        _handleConnection = handleConnection;
-
-        Connect();
-    }
-
-    /// <summary>
     /// Initialize a new pipe server.
     /// </summary>
     /// <param name="pipeName">The name of the pipe server.</param>
     /// <param name="platform">Method for initializing a new pipe-based server.</param>
-    /// <param name="handleRequest">Event handler called when receiving a new message from a client.</param>
+    /// <param name="handleMessage">Event handler called when receiving a new message from a client.</param>
+    /// <param name="logger"></param>
     /// <returns>An instance of the new pipe server.</returns>
-    public NamedPipeServer(string pipeName, IPipePlatform platform, Action<CustomMessage> handleRequest) : this(pipeName, platform)
+    public NamedPipeServer(string pipeName, IPipePlatform platform, Action<INamedPipe, CustomMessage> handleMessage, ILogger logger)
     {
-        _handleConnection = message => HandleMessage(handleRequest);
+        _handleMessage = handleMessage;
+        _pipeName = pipeName;
+        _platform = platform;
+        _logger = logger;
+
+        Connect();
     }
 
-    LogMessage defaultMissingBody = new LogMessage(LogLevel.Error, "A message has been received but could not be parsed. Ignoring.");
-    private async void HandleMessage(Action<CustomMessage> handleRequest)
+    private async void HandleMessages()
     {
         while (Stream?.IsConnected ?? false)
         {
@@ -59,7 +52,18 @@ public class NamedPipeServer : NamedPipeBase
                 break;
             }
 
-            handleRequest(message ?? defaultMissingBody);
+            if (message is null)
+            {
+                _logger.LogError("A null messagehas been received. Ignoring.");
+                continue;
+            }
+
+            // Only process the message if it has not been sent by the current thread, as both the client and server can write/read messages.
+            if (message.SenderId != _namedPipeId)
+            {
+                _logger.LogDebug("Message {MessageId} will be handled by {NamedPipeId}", message.MessageId, this._namedPipeId);
+                _handleMessage?.Invoke(this, message);
+            }
         }
     }
 
@@ -81,23 +85,17 @@ public class NamedPipeServer : NamedPipeBase
 
             if (!_connectionStopped)
             {
-                _handleConnection?.Invoke(this);
+                _ = Task.Run(() => HandleMessages());
             }
         }
         catch (IOException e)
         {
-            Log($"Pipe {_pipeName} broken with: ", e);
+            _logger.LogError(e, "Pipe {_pipeName} broken with: ", _pipeName);
         }
         catch (Exception e)
         {
-            Log("Unhandled exception during server start", e);
+            _logger.LogError(e, "Unhandled exception during server start");
         }
-    }
-
-    private static void Log(string message, Exception e)
-    {
-        Console.WriteLine(message);
-        Console.WriteLine(e);
     }
 
     /// <inheritdoc />

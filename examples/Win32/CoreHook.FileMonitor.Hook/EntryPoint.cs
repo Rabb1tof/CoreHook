@@ -54,7 +54,7 @@ public partial class EntryPoint : IEntryPoint
             {
                 lock (This._queue)
                 {
-                    This._queue.Enqueue($"{DateTime.Now:'dd/mm'} - Called CreateFile on {fileName}");
+                    This._queue.Enqueue($"{DateTime.Now:dd/MM/yyyy HH:mm:ss.fff} - Called CreateFile on {fileName}");
                 }
             }
         }
@@ -97,7 +97,7 @@ public partial class EntryPoint : IEntryPoint
                     CreateFileMessage message;
                     lock (_queue)
                     {
-                        message = new CreateFileMessage() { Queue = _queue.ToArray() };
+                        message = new CreateFileMessage(_queue.ToArray());
                         _queue.Clear();
                     }
 

@@ -1,5 +1,6 @@
 ﻿using CoreHook.IPC.Messages;
 
+using System;
 using System.IO;
 using System.IO.Pipes;
 using System.Threading;
@@ -9,6 +10,8 @@ namespace CoreHook.IPC.NamedPipes;
 public abstract class NamedPipeBase : INamedPipe
 {
     protected string _pipeName;
+
+    protected string _namedPipeId = Guid.NewGuid().ToString();
 
     public virtual PipeStream? Stream
     {
@@ -35,6 +38,8 @@ public abstract class NamedPipeBase : INamedPipe
 
         try
         {
+            message = message with { SenderId = _namedPipeId };
+
             await _writer.WriteLineAsync(message.Serialize());
             await _writer.FlushAsync();
 
@@ -76,4 +81,5 @@ public abstract class NamedPipeBase : INamedPipe
     {
         Interlocked.Exchange(ref _pipeStream, null)?.Dispose();
     }
+
 }

@@ -4,6 +4,8 @@ using CoreHook.IPC.Messages;
 using CoreHook.IPC.NamedPipes;
 using CoreHook.IPC.Platform;
 
+using Microsoft.Extensions.Logging;
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -14,6 +16,9 @@ namespace CoreHook.FileMonitor;
 
 class Program
 {
+    private static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+    private static readonly ILogger logger = loggerFactory.CreateLogger<Program>();
+
     /// <summary>
     /// The library to be injected into the target process and executed using the EntryPoint's 'Run' Method.
     /// </summary>
@@ -71,11 +76,15 @@ class Program
             targetProcessId = Process.Start(targetProgram)?.Id ?? throw new InvalidOperationException($"Failed to start the executable at {targetProgram}");
         }
 
-        // Inject FileMonitor dll into process using default pipe platform
-        RemoteHook.InjectDllIntoTarget(targetProcessId, injectionLibrary, verboseLog: true, parameters: PipeName);
-
         // Start the RPC server for handling requests from the hooked program.
-        StartListener();
+        using var server = new NamedPipeServer(PipeName, IPipePlatform.Default, HandleRequest, logger);
+        Console.WriteLine($"Now listening on {PipeName}.");
+
+        // Inject FileMonitor dll into process using default pipe platform
+        RemoteHook.InjectDllIntoTarget(targetProcessId, injectionLibrary, logger, verboseLog: true, parameters: PipeName);
+
+        Console.WriteLine("Press Enter to quit.");
+        Console.ReadLine();
     }
 
     /// <summary>
@@ -127,20 +136,7 @@ class Program
         return false;
     }
 
-    /// <summary>
-    /// Create an RPC server that is called by the RPC client started in
-    /// a target process.
-    /// </summary>
-    private static void StartListener()
-    {
-        using var server = new NamedPipeServer(PipeName, IPipePlatform.Default, handleRequest);
-       
-        Console.WriteLine($"Now listening on {PipeName}."); 
-        Console.WriteLine("Press Enter to quit.");
-        Console.ReadLine();
-    }
-
-    private static void handleRequest(CustomMessage obj)
+    private static void HandleRequest(INamedPipe _, CustomMessage obj)
     {
         if (obj is CreateFileMessage message)
         {

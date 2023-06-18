@@ -3,6 +3,8 @@ using CoreHook.IPC.Messages;
 using CoreHook.IPC.NamedPipes;
 using CoreHook.IPC.Platform;
 
+using Microsoft.Extensions.Logging;
+
 using System;
 using System.Collections.Generic;
 
@@ -14,19 +16,16 @@ namespace CoreHook.BinaryInjection;
 /// a message about that the CoreHook plugin was successfully loaded or throw an
 /// exception after a certain amount of time when no message has been received.
 /// </summary>
-public class InjectionHelper
+public class InjectionHelper : IDisposable
 {
-    private static readonly SortedList<int, InjectionState> ProcessList = new SortedList<int, InjectionState>();
+    private readonly SortedList<int, InjectionState> ProcessList = new SortedList<int, InjectionState>();
+    private readonly ILogger _logger;
+    private readonly NamedPipeServer _server;
 
-    /// <summary>
-    /// Create a named pipe server for awaiting messages.
-    /// </summary>
-    /// <param name="namedPipeName">The name of the server pipe.</param>
-    /// <param name="pipePlatform">A class that creates a pipe instance.</param>
-    /// <returns>The named pipe server.</returns>
-    public static INamedPipe CreateServer(string namedPipeName, IPipePlatform pipePlatform)
+    public InjectionHelper(string namedPipeName, IPipePlatform pipePlatform, ILogger logger)
     {
-        return new NamedPipeServer(namedPipeName, pipePlatform, HandleMessage);
+        _logger = logger;
+        _server = new NamedPipeServer(namedPipeName, pipePlatform, HandleMessage, logger);
     }
 
     /// <summary>
@@ -34,7 +33,7 @@ public class InjectionHelper
     /// </summary>
     /// <param name="message">The message to process.</param>
     /// <param name="channel">The server communication channel.</param>
-    private static void HandleMessage(CustomMessage message)
+    private void HandleMessage(INamedPipe _, CustomMessage message)
     {
         switch (message.GetType().Name)
         {
@@ -49,12 +48,12 @@ public class InjectionHelper
                     throw new InjectionLoadException($"Injection into process {messageData.ProcessId} failed.");
                 }
                 break;
-            
+
             case nameof(LogMessage):
                 var logMessageData = (LogMessage)message;
-                Log($"{logMessageData.Level}: {logMessageData.Message}");
+                _logger.LogInformation($"{logMessageData.Level}: {logMessageData.Message}");
                 break;
-         
+
             default:
                 throw new InvalidOperationException($"Message type {message.GetType().Name} is not supported");
         }
@@ -64,7 +63,7 @@ public class InjectionHelper
     /// Start the process for awaiting a notification from a remote process.
     /// </summary>
     /// <param name="targetProcessId">The remote process ID we expect the notification from.</param>
-    public static void BeginInjection(int targetProcessId)
+    public void BeginInjection(int targetProcessId)
     {
         InjectionState? state;
 
@@ -95,7 +94,7 @@ public class InjectionHelper
     /// Remove a process ID from a list we use to wait for remote notifications.
     /// </summary>
     /// <param name="targetProcessId">The remote process ID we expect the notification from.</param>
-    public static void EndInjection(int targetProcessId)
+    public void EndInjection(int targetProcessId)
     {
         lock (ProcessList)
         {
@@ -109,7 +108,7 @@ public class InjectionHelper
     /// Complete the wait for a notification.
     /// </summary>
     /// <param name="remoteProcessId">The remote process ID we expect the notification from.</param>
-    public static void InjectionCompleted(int remoteProcessId)
+    public void InjectionCompleted(int remoteProcessId)
     {
         InjectionState state;
 
@@ -127,7 +126,7 @@ public class InjectionHelper
     /// </summary>
     /// <param name="targetProcessId">The remote process ID we expect the notification from.</param>
     /// <param name="timeOutMilliseconds">The time in milliseconds to wait for the notification message.</param>
-    public static void WaitForInjection(int targetProcessId, int timeOutMilliseconds = 20000)
+    public void WaitForInjection(int targetProcessId, int timeOutMilliseconds = 20000)
     {
         InjectionState state;
 
@@ -154,7 +153,7 @@ public class InjectionHelper
     /// </summary>
     /// <param name="remoteProcessId">The process ID we expect a notification from.</param>
     /// <param name="e">The error that occured during the wait.</param>
-    private static void HandleException(int remoteProcessId, Exception e)
+    private void HandleException(int remoteProcessId, Exception e)
     {
         InjectionState state;
 
@@ -167,12 +166,8 @@ public class InjectionHelper
         state.Completion.Set();
     }
 
-    /// <summary>
-    /// Log a message.
-    /// </summary>
-    /// <param name="message">The message to log.</param>
-    private static void Log(string message)
+    public void Dispose()
     {
-        Console.WriteLine(message);
+        _server.Dispose();
     }
 }

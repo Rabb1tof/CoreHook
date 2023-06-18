@@ -1,8 +1,10 @@
 ﻿using CoreHook.BinaryInjection;
 using CoreHook.BinaryInjection.IPC;
-using CoreHook.IPC.Messages;
 using CoreHook.IPC.NamedPipes;
-using CoreHook.IPC.Platform;
+
+using Microsoft.Extensions.Logging;
+
+using Moq;
 
 using System;
 using System.Threading.Tasks;
@@ -14,78 +16,62 @@ namespace CoreHook.Tests;
 public class InjectionHelperTest
 {
     private readonly int _targetProcessId = Environment.ProcessId;
+    private readonly ILogger logger = Mock.Of<ILogger>();
 
     [Fact]
-    public void InjectionHelperCompleted()
+    public async void InjectionHelperCompleted()
     {
-        var injectionComplete = false;
-        var InjectionHelperPipeName = "InjectionHelperPipeTest";
+        var injectionHelperPipeName = "InjectionHelperPipeTest";
+        using var injectionHelper = new InjectionHelper(injectionHelperPipeName, PipePlatformBase.Instance, logger);
 
-        InjectionHelper.BeginInjection(_targetProcessId);
-        using (InjectionHelper.CreateServer(InjectionHelperPipeName, GetPipePlatform()))
+        injectionHelper.BeginInjection(_targetProcessId);
+
+        bool injectionComplete;
+        try
         {
-            try
-            {
-                Task.Run(() => SendInjectionComplete(InjectionHelperPipeName, _targetProcessId));
+            await SendInjectionComplete(injectionHelperPipeName, _targetProcessId);
 
-                InjectionHelper.WaitForInjection(_targetProcessId);
-            }
-            finally
-            {
-                InjectionHelper.InjectionCompleted(_targetProcessId);
-
-                injectionComplete = true;
-            }
+            injectionHelper.WaitForInjection(_targetProcessId);
         }
+        finally
+        {
+            injectionHelper.InjectionCompleted(_targetProcessId);
+
+            injectionComplete = true;
+        }
+
         Assert.True(injectionComplete);
     }
 
     [Fact]
     public void InjectionHelperDidNotComplete()
     {
-        var InjectionHelperPipeName = "InjectionHelperFailedPipeTest";
-
-        InjectionHelper.BeginInjection(_targetProcessId);
-        using (InjectionHelper.CreateServer(InjectionHelperPipeName, GetPipePlatform()))
+        using var injectionHelper = new InjectionHelper("InjectionHelperFailedPipeTest", PipePlatformBase.Instance, logger);
+        
+        injectionHelper.BeginInjection(_targetProcessId);
+        
+        try
         {
-            try
-            {
-                Assert.Throws<TimeoutException>(() => InjectionHelper.WaitForInjection(_targetProcessId, 500));
-            }
-            finally
-            {
-                InjectionHelper.InjectionCompleted(_targetProcessId);
-            }
+            Assert.Throws<TimeoutException>(() => injectionHelper.WaitForInjection(_targetProcessId, 500));
         }
+        finally
+        {
+            injectionHelper.InjectionCompleted(_targetProcessId);
+        }
+
     }
 
-    private static bool SendInjectionComplete(string pipeName, int pid)
+    private static async Task<bool> SendInjectionComplete(string pipeName, int pid)
     {
-        using var pipeClient = CreateClient(pipeName);
+        using var pipeClient = new NamedPipeClient(pipeName, true);
 
         try
         {
-            pipeClient.Connect();
-            return SendPipeMessage(pipeClient, new InjectionCompleteMessage(pid, true));
+            return await pipeClient.TryWrite(new InjectionCompleteMessage(pid, true));
         }
         catch
         {
             return false;
         }
-    }
-
-    private static INamedPipe CreateClient(string pipeName)
-    {
-        return new NamedPipeClient(pipeName);
-    }
-
-    private static IPipePlatform GetPipePlatform()
-    {
-        return new PipePlatformBase();
-    }
-
-    private static bool SendPipeMessage(INamedPipe pipe, CustomMessage message)
-    {
-        return pipe.TryWrite(message).Result;
     }
 }

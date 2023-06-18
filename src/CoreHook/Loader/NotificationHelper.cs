@@ -2,6 +2,8 @@
 using CoreHook.IPC.Messages;
 using CoreHook.IPC.NamedPipes;
 
+using Microsoft.Extensions.Logging;
+
 using System;
 using System.Threading.Tasks;
 
@@ -13,8 +15,7 @@ internal class NotificationHelper : IDisposable
 
     internal NotificationHelper(string pipeName)
     {
-        _pipe = new NamedPipeClient(pipeName);
-        _pipe.Connect();
+        _pipe = new NamedPipeClient(pipeName, true);
     }
 
     /// <summary>
@@ -28,7 +29,7 @@ internal class NotificationHelper : IDisposable
         return await _pipe.TryWrite(new InjectionCompleteMessage(processId, true));
     }
 
-    internal async Task<bool> Log(string message, LogLevel level = LogLevel.Info)
+    internal async Task<bool> Log(string message, LogLevel level = LogLevel.Information)
     {
         return await _pipe.TryWrite(new LogMessage(level, message));
     }

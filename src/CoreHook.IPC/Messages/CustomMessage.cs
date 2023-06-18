@@ -1,15 +1,19 @@
 ﻿using System;
-using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
 
 namespace CoreHook.IPC.Messages;
 
-public abstract class CustomMessage
+public abstract record CustomMessage(string SenderId)
 {
     [JsonPropertyName("$type")]
-    public string TypeName => this.GetType().AssemblyQualifiedName!;
+    public virtual string TypeName => this.GetType().AssemblyQualifiedName!;
+
+    public virtual Guid MessageId { get; } = Guid.NewGuid();
+
+    //public virtual string SenderId { get; set; }
+
+    public CustomMessage() : this(String.Empty) { }
 
     /// <summary>
     /// Serialize the message's properties and data to a string.
@@ -25,11 +29,12 @@ public abstract class CustomMessage
     {
         var json = JsonDocument.Parse(body);
         var type = Type.GetType(json.RootElement.GetProperty("$type").GetString(), false);
-        
+
         if (type is null)
         {
             return null;
         }
+
         return (CustomMessage?)json.Deserialize(type);
     }
 }

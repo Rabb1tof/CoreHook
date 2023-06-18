@@ -4,6 +4,8 @@ using CoreHook.Helpers;
 using CoreHook.IPC.Platform;
 using CoreHook.Managed;
 
+using Microsoft.Extensions.Logging;
+
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -30,6 +32,10 @@ public static class RemoteHook
     /// </summary>
     private static readonly AssemblyDelegate CoreHookLoaderDelegate = new("CoreHook", "CoreHook.Loader.PluginLoader", "Load", "CoreHook.Loader.PluginLoader+LoadDelegate, CoreHook");
 
+
+    private static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+    private static readonly ILogger logger = loggerFactory.CreateLogger(nameof(RemoteHook));
+
     /// <summary>
     /// Check if a file path is valid, otherwise throw an exception.
     /// </summary>
@@ -51,11 +57,12 @@ public static class RemoteHook
     /// in the existing created process referenced by <paramref name="targetProcessId"/>.
     /// </summary>
     /// <param name="targetProcessId">The target process ID to inject and load plugin into.</param>
+    /// <param name="logger"></param>
     /// <param name="hookLibrary"></param>
     /// <param name="pipePlatform"></param>
     /// <param name="verboseLog"></param>
     /// <param name="parameters"></param>
-    public static void InjectDllIntoTarget(int targetProcessId, string hookLibrary, IPipePlatform? pipePlatform = null, bool verboseLog = false, params object[] parameters)
+    public static void InjectDllIntoTarget(int targetProcessId, string hookLibrary, ILogger logger, IPipePlatform? pipePlatform = null, bool verboseLog = false, params object[] parameters)
     {
         ValidateFilePath(hookLibrary);
 
@@ -69,7 +76,7 @@ public static class RemoteHook
         //GrantAllAppPackagesAccessToFile(coreRunPath);
         //GrantAllAppPackagesAccessToFile(corehookPath);
 
-        using var injector = new RemoteInjector(targetProcessId, pipePlatform, InjectionPipeName);
+        using var injector = new RemoteInjector(targetProcessId, pipePlatform, InjectionPipeName, logger);
 
         var startCoreCLRArgs = new NetHostStartArguments(coreLoadPath, coreRootPath, verboseLog, InjectionPipeName);
         injector.Inject(coreRunPath, "StartCoreCLR", startCoreCLRArgs, true, hostpath, corehookPath);

@@ -2,6 +2,8 @@
 using CoreHook.IPC.NamedPipes;
 using CoreHook.IPC.Platform;
 
+using Microsoft.Extensions.Logging;
+
 using System;
 
 namespace CoreHook.BinaryInjection;
@@ -10,19 +12,20 @@ public class RemoteInjector : IDisposable
 {
     private readonly int _targetProcessId;
     private readonly ManagedProcess _managedProcess;
-    private readonly INamedPipe _server;
+    private readonly ILogger _logger;
+    private readonly InjectionHelper _injectionHelper;
 
-    public RemoteInjector(int targetProcessId, IPipePlatform pipePlatform, string injectionPipeName)
+    public RemoteInjector(int targetProcessId, IPipePlatform pipePlatform, string injectionPipeName, ILogger logger)
     {
         if (string.IsNullOrWhiteSpace(injectionPipeName))
         {
             throw new ArgumentException("Invalid injection pipe name");
         }
 
+        _logger = logger;
         _targetProcessId = targetProcessId;
         _managedProcess = new ManagedProcess(targetProcessId);
-
-        _server = InjectionHelper.CreateServer(injectionPipeName, pipePlatform);
+        _injectionHelper = new InjectionHelper(injectionPipeName, pipePlatform, logger);
     }
 
     /// <summary>
@@ -36,7 +39,7 @@ public class RemoteInjector : IDisposable
     public void Inject<T>(string hostLibrary, string method, T arguments, bool waitForExit = true, params string[] libraries)
     {
         //TODO: useless when waitForExit == true?
-        InjectionHelper.BeginInjection(_targetProcessId);
+        _injectionHelper.BeginInjection(_targetProcessId);
 
         try
         {
@@ -52,16 +55,16 @@ public class RemoteInjector : IDisposable
             if (!waitForExit)
             {
                 //TODO: set back the timeout to 10000 or 20000
-                InjectionHelper.WaitForInjection(_targetProcessId, 120000);
+                _injectionHelper.WaitForInjection(_targetProcessId, 120000);
             }
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.ToString());
+            _logger.LogError(e, "Unable to inject");
         }
         finally
         {
-            InjectionHelper.EndInjection(_targetProcessId);
+            _injectionHelper.EndInjection(_targetProcessId);
         }
     }
 
@@ -73,6 +76,6 @@ public class RemoteInjector : IDisposable
     public void Dispose()
     {
         _managedProcess.Dispose();
-        _server.Dispose();
+        _injectionHelper.Dispose();
     }
 }
