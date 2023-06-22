@@ -2,11 +2,13 @@
 
 using CoreHook.IPC.Platform;
 
-namespace CoreHook.Tests;
+namespace CoreHook.BinaryInjection.Tests;
 
 internal class PipePlatformBase : IPipePlatform
 {
     public static PipePlatformBase Instance { get; } = new PipePlatformBase();
+
+    public static string GetUniquePipeName() => Path.GetRandomFileName();
 
     public NamedPipeServerStream CreatePipeByName(string pipeName, string serverName)
     {

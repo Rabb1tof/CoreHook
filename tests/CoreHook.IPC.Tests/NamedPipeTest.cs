@@ -5,20 +5,17 @@ using Microsoft.Extensions.Logging;
 
 using Moq;
 
-using System.Threading.Tasks;
-
-using Xunit;
-
-namespace CoreHook.Tests;
+namespace CoreHook.IPC.Tests;
 
 public class NamedPipeTest
 {
     private readonly ILogger logger = Mock.Of<ILogger>();
 
+
     [Fact]
     private async void ShouldConnectToServer()
     {
-        string namedPipe = Resources.GetUniquePipeName();
+        string namedPipe = PipePlatformBase.GetUniquePipeName();
         var request = new StringMessage("Ping");
         var response = new StringMessage("Pong");
 
@@ -38,7 +35,7 @@ public class NamedPipeTest
     [Fact]
     private async void ShouldConnectToServerAndReceiveMultipleResponses()
     {
-        string namedPipe = Resources.GetUniquePipeName();
+        string namedPipe = PipePlatformBase.GetUniquePipeName();
 
         var testMessage1 = new StringMessage("TestMessage1");
         var testMessage2 = new StringMessage("TestMessage2");

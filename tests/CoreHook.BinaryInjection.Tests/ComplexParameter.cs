@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CoreHook.Tests.Plugins.Shared;
+namespace CoreHook.BinaryInjection.Tests;
 
 [Serializable]
 public class ComplexParameter

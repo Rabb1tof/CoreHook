@@ -32,8 +32,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\CoreHook\CoreHook.csproj" />
-    <ProjectReference Include="..\..\..\src\CoreHook.IPC\CoreHook.IPC.csproj" />
+    <ProjectReference Include="..\..\..\CoreHook\CoreHook.csproj" />
+    <ProjectReference Include="..\..\..\CoreHook.IPC\CoreHook.IPC.csproj" />
     <ProjectReference Include="..\CoreHook.Uwp.FileMonitor.Hook\CoreHook.Uwp.FileMonitor.Hook.csproj" />
   </ItemGroup>
 

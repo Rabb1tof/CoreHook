@@ -4,7 +4,7 @@ namespace CoreHook.Native;
 
 internal static partial class NativeApi32
 {
-    private const string DllName = "corehook32";
+    private const string DllName = "x86\\corehook32.dll";
 
     [LibraryImport(DllName, StringMarshalling = StringMarshalling.Utf16)]
     [UnmanagedCallConv(CallConvs = new System.Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]

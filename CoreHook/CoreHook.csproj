@@ -1,0 +1,89 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Platforms>AnyCPU</Platforms>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>Enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <!--<DocumentationFile>$(BinDir)$(Configuration)/$(DefaultTargetFramework)/$(Platform)/$(MSBuildProjectName).xml</DocumentationFile>-->
+    <Authors>Thierry Bizimungu, Jérôme Saliba</Authors>
+    <Copyright>Copyright (c) 2018 Thierry Bizimungu (@unknownv2) / 2023 Jérôme Saliba (@wokhan)</Copyright>
+    <Product>CoreHook</Product>
+    <Version>1.0.1</Version>
+    <PackageProjectUrl>https://github.com/wokhan/CoreHook</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/wokhan/CoreHook.git</RepositoryUrl>
+    <PackageLicenseUrl>https://github.com/wokhan/CoreHook/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <RepositoryType>git</RepositoryType>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <DebugType>portable</DebugType>
+    <IsPackable>true</IsPackable>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+    <Description>Library for facilitating interprocess communication (IPC).</Description>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="CoreHook.Tests" />
+  </ItemGroup>
+  
+  <!--<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath>$(OutputDir)</OutputPath>
+  </PropertyGroup>-->
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <!--<OutputPath>$(OutputDir)</OutputPath>-->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Native\corehook32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\x86\$(Configuration)\CoreHook.NativeHost32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\x86\$(Configuration)\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
+    <None Include="Native\corehook64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\x64\$(Configuration)\CoreHook.NativeHost64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\x64\$(Configuration)\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoreHook.BinaryInjection\CoreHook.BinaryInjection.csproj" />
+    <ProjectReference Include="..\CoreHook.IPC\CoreHook.IPC.csproj" />
+    <!--<ProjectReference Include="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <OutputItemType>Content</OutputItemType>
+      <IncludeAssets>All</IncludeAssets>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </ProjectReference>-->
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="CoreHook.runtimeconfig.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <Target BeforeTargets="Build" Name="BuildNativeHost">
+    <MSBuild Projects="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj" Properties="Platform=x64" />
+    <MSBuild Projects="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj" Properties="Platform=Win32" />
+  </Target>
+  
+</Project>

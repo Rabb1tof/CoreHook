@@ -11,22 +11,22 @@ internal class ModulesPathHelper
     /// <summary>
     /// The name of the .NET Core hosting module for 64-bit processes.
     /// </summary>
-    private const string CoreHostModule64 = "CoreHook.NativeHost64.dll";
+    private const string CoreHostModule64 = "x64\\CoreHook.NativeHost64.dll";
 
     /// <summary>
     /// The name of the .NET Core hosting module for 32-bit processes.
     /// </summary>
-    private const string CoreHostModule32 = "CoreHook.NativeHost32.dll";
+    private const string CoreHostModule32 = "x86\\CoreHook.NativeHost32.dll";
 
     /// <summary>
     /// The name of the native detour module for 64-bit processes.
     /// </summary>
-    private const string CoreHookingModule64 = "corehook64.dll";
+    private const string CoreHookingModule64 = "x64\\corehook64.dll";
 
     /// <summary>
     /// The name of the native detour module for 32-bit processes.
     /// </summary>
-    private const string CoreHookingModule32 = "corehook32.dll";
+    private const string CoreHookingModule32 = "x86\\corehook32.dll";
 
     /// <summary>
     /// Module that loads and executes the IEntryPoint.Run method of our hook dll.
@@ -149,7 +149,7 @@ internal class ModulesPathHelper
             HandleFileNotFound(corehookPath);
         }
 
-        var nethostLibPath = Path.Combine(currentDir, "nethost.dll");
+        var nethostLibPath = Path.Combine(currentDir, $"{(is64BitProcess ? "x64" : "x86")}\\nethost.dll");
 
         var coreLoadPath = Path.Combine(currentDir, CoreLoadModule);
 

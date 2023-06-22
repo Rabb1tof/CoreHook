@@ -25,8 +25,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\CoreHook\CoreHook.csproj" />
-    <ProjectReference Include="..\..\..\src\CoreHook.IPC\CoreHook.IPC.csproj" />
+    <ProjectReference Include="..\..\..\CoreHook\CoreHook.csproj" />
+    <ProjectReference Include="..\..\..\CoreHook.IPC\CoreHook.IPC.csproj" />
     <ProjectReference Include="..\CoreHook.FileMonitor.Hook\CoreHook.FileMonitor.Hook.csproj" />
   </ItemGroup>
 

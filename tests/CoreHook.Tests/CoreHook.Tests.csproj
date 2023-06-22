@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AdditionalFiles Include="..\..\NativeMethods.txt" Link="NativeMethods.txt" />
+    <AdditionalFiles Include="NativeMethods.txt" />
     <AdditionalFiles Include="NativeMethods.json" />
   </ItemGroup>
 
@@ -47,40 +47,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\CoreHook.BinaryInjection\CoreHook.BinaryInjection.csproj" />
-    <ProjectReference Include="..\..\src\CoreHook.IPC\CoreHook.IPC.csproj" />
-    <ProjectReference Include="..\..\src\CoreHook\CoreHook.csproj" />
-    <ProjectReference Include="..\plugins\CoreHook.Tests.Plugins.Shared\CoreHook.Tests.Plugins.Shared.csproj" />
+    <ProjectReference Include="..\..\CoreHook\CoreHook.csproj" />
   </ItemGroup>
-
-  <!--<ItemGroup>
-    <Compile Include="$(CommonPath)\Interop\Windows\Interop.Libraries.cs">
-      <Link>Common\Interop\Windows\Interop.Libraries.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernelbase\Interop.CompareStringW.cs">
-      <Link>Common\Interop\Windows\kernelbase\Interop.CompareStringW.cs</Link>
-    </Compile>    
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.AddAtomW.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.AddAtomW.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.Beep.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.Beep.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.DeleteAtom.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.DeleteAtom.cs</Link>
-    </Compile>    
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.FindAtomW.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.FindAtomW.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.GetVersion.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.GetVersion.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.GetTickCount64.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.GetTickCount64.cs</Link>
-    </Compile>
-    <Compile Include="$(CommonPath)\Interop\Windows\kernel32\Interop.GetAtomNameW.cs">
-      <Link>Common\Interop\Windows\kernel32\Interop.GetAtomNameW.cs</Link>
-    </Compile>
-  </ItemGroup>-->
 
 </Project>

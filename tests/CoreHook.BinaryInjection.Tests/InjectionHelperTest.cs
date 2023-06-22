@@ -7,11 +7,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 
 using System;
-using System.Threading.Tasks;
 
-using Xunit;
-
-namespace CoreHook.Tests;
+namespace CoreHook.BinaryInjection.Tests;
 
 public class InjectionHelperTest
 {
@@ -47,9 +44,9 @@ public class InjectionHelperTest
     public void InjectionHelperDidNotComplete()
     {
         using var injectionHelper = new InjectionHelper("InjectionHelperFailedPipeTest", PipePlatformBase.Instance, logger);
-        
+
         injectionHelper.BeginInjection(_targetProcessId);
-        
+
         try
         {
             Assert.Throws<TimeoutException>(() => injectionHelper.WaitForInjection(_targetProcessId, 500));
