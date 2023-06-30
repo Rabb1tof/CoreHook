@@ -4,11 +4,9 @@ using System;
 using System.Diagnostics;
 using System.IO;
 
-using Xunit;
-
 namespace CoreHook.Tests;
 
-public partial class ThreadHelperTest
+public partial class ManagedProcessTest
 {
     [Fact]
     public void ShouldGetFunctionAddressForCurrentProcess()

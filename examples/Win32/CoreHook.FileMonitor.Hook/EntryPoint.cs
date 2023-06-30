@@ -38,9 +38,12 @@ public partial class EntryPoint : IEntryPoint
     [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode, SetLastError = true)]
     delegate IntPtr CreateFileDelegate(string fileName, uint desiredAccess, uint shareMode, IntPtr securityAttributes, uint creationDisposition, uint flagsAndAttributes, IntPtr templateFile);
 
+    //[LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    //[UnmanagedCallConv(CallConvs = new Type[] { typeof(System.Runtime.CompilerServices.CallConvStdcall) })]
+    //private static partial IntPtr CreateFile(string fileName, uint desiredAccess, uint shareMode, IntPtr securityAttributes, uint creationDisposition, uint flagsAndAttributes, IntPtr templateFile);
+
     [DllImport("kernel32.dll", CallingConvention = CallingConvention.StdCall, SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern IntPtr CreateFile(string fileName, uint desiredAccess, uint shareMode, IntPtr securityAttributes, uint creationDisposition, uint flagsAndAttributes, IntPtr templateFile);
-
 
     // Intercepts all file accesses and stores the requested filenames to a Queue.
     private static IntPtr CreateFile_Hooked(string fileName, uint desiredAccess, uint shareMode, IntPtr securityAttributes, uint creationDisposition, uint flagsAndAttributes, IntPtr templateFile)
@@ -52,6 +55,7 @@ public partial class EntryPoint : IEntryPoint
             EntryPoint This = (EntryPoint)HookRuntimeInfo.Callback;
             if (This is not null)
             {
+                //TODO: send message directly? Why use a queue afterall?
                 lock (This._queue)
                 {
                     This._queue.Enqueue($"{DateTime.Now:dd/MM/yyyy HH:mm:ss.fff} - Called CreateFile on {fileName}");
@@ -80,6 +84,7 @@ public partial class EntryPoint : IEntryPoint
 
     private async Task RunClientAsync(string pipename)// Stream clientStream)
     {
+        //TODO: not sure this is useful nor correct?
         await Task.Yield(); // We want this task to run on another thread.
 
         var client = new NamedPipeClient(pipename, true);

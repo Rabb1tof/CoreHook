@@ -29,7 +29,7 @@ public class NamedPipeClient : NamedPipeBase
         }
 
         ArgumentNullException.ThrowIfNull(_pipeName);
-
+        
         var pipeStream = new NamedPipeClientStream(".", _pipeName, PipeDirection.InOut, PipeOptions.Asynchronous, TokenImpersonationLevel.Impersonation);
 
         Stream = pipeStream;

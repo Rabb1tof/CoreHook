@@ -1,4 +1,5 @@
 ﻿using CoreHook.BinaryInjection;
+using CoreHook.Extensions;
 using CoreHook.HookDefinition;
 using CoreHook.IPC.Messages;
 using CoreHook.IPC.NamedPipes;
@@ -7,6 +8,7 @@ using CoreHook.Uwp.FileMonitor.Hook;
 using Microsoft.Extensions.Logging;
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Security.AccessControl;
@@ -101,7 +103,7 @@ class Program
         Console.WriteLine($"Now listening on {PipeName}.");
 
         // Inject the FileMonitor.Hook dll into the process.
-        RemoteHook.InjectDllIntoTarget(targetProcessId, injectionLibrary, logger, pipePlatform, true, PipeName);
+        Process.GetProcessById(targetProcessId).AttachHook(injectionLibrary, loggerFactory, pipePlatform, PipeName);
 
         Console.WriteLine("Press Enter to quit.");
         Console.ReadLine();

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace CoreHook.Helpers;
@@ -33,9 +32,6 @@ internal class ModulesPathHelper
     /// It also resolves any dependencies for the CoreHook plugin.
     /// </summary>
     private const string CoreLoadModule = "CoreHook.dll";
-
-    // For more information o on these environment variables, see: 
-    // https://github.com/dotnet/coreclr/blob/master/Documentation/workflow/UsingCoreRun.md
 
     public static string GetCoreRootPath(bool is64BitProcess)
     {

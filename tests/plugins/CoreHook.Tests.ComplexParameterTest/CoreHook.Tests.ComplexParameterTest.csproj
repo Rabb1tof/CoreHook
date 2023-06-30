@@ -4,18 +4,9 @@
     <TargetFramework>net7.0</TargetFramework>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>        
   </PropertyGroup>
-
-  <!--<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>$(OutputDir)Test</OutputPath>
-  </PropertyGroup>-->
-
-  <!--<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>$(OutputDir)Test</OutputPath>
-  </PropertyGroup>-->
-
+  
   <ItemGroup>
     <ProjectReference Include="..\..\..\CoreHook\CoreHook.csproj" />
-    <ProjectReference Include="..\..\CoreHook.BinaryInjection.Tests\CoreHook.BinaryInjection.Tests.csproj" />
   </ItemGroup>
 
 </Project>

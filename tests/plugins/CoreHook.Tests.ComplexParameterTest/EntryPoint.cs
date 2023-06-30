@@ -1,6 +1,5 @@
 ﻿using System;
 
-using CoreHook.BinaryInjection.Tests;
 using CoreHook.EntryPoint;
 
 namespace CoreHook.Tests.ComplexParameterTest;

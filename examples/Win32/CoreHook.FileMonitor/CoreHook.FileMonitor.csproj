@@ -30,15 +30,4 @@
     <ProjectReference Include="..\CoreHook.FileMonitor.Hook\CoreHook.FileMonitor.Hook.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.NETCore.DotNetAppHost" Version="7.0.5">
-      <IncludeAssets>runtime;native</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-  <!--<ItemGroup Condition="'$(Platform)'=='x86'">
-    <PackageReference Include="Microsoft.NETCore.App.Host.win-x86" Version="7.0.5" GeneratePathProperty="True" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(Platform)'=='x64'">
-    <PackageReference Include="Microsoft.NETCore.App.Host.win-x64" Version="7.0.5" GeneratePathProperty="True" />
-  </ItemGroup>-->
 </Project>

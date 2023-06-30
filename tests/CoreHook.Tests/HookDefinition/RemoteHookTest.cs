@@ -1,17 +1,29 @@
-﻿using System.Diagnostics;
+﻿using CoreHook.HookDefinition;
+using CoreHook.Tests.ComplexParameterTest;
+
+using Microsoft.Extensions.Logging;
+
+using Moq;
+
+using System;
+using System.Diagnostics;
+using System.IO;
+
 using System.Reflection;
 
-namespace CoreHook.BinaryInjection.Tests;
+using System.Threading;
+
+namespace CoreHook.Tests.HookDefinition;
 
 [Collection("Remote Injection Tests")]
-public class RemoteInjectionTestSimpleParameter
+public class RemoteHookTest
 {
-    private const string TestModuleDir = "Test";
+    private ILoggerFactory logger = Mock.Of<ILoggerFactory>();
 
     [Theory]
     [InlineData("System32")]
     [InlineData("SysWOW64")]
-    private void TestRemotePluginSimpleParameter(string applicationFolder)
+    public void InjectDllIntoTargetTest(string applicationFolder)
     {
         const string testHookLibrary = "CoreHook.Tests.SimpleParameterTest.dll";
         const string remoteArgument = "Berner";
@@ -20,7 +32,7 @@ public class RemoteInjectionTestSimpleParameter
 
         Thread.Sleep(500);
 
-        InjectDllIntoTarget(testProcess, GetTestDllPath(testHookLibrary), PipePlatformBase.GetUniquePipeName(), remoteArgument);
+        RemoteHook.InjectDllIntoTarget(testProcess.Id, GetTestDllPath(testHookLibrary), logger, PipePlatformBase.Instance, false, remoteArgument);
 
         Assert.Equal(remoteArgument, ReadFromProcess(testProcess));
 
@@ -34,7 +46,7 @@ public class RemoteInjectionTestSimpleParameter
     [Theory]
     [InlineData("System32")]
     [InlineData("SysWOW64")]
-    private void TestRemotePluginComplexParameter(string applicationFolder)
+    public void InjectDllIntoTargetComplexTest(string applicationFolder)
     {
         const string testHookLibrary = "CoreHook.Tests.ComplexParameterTest.dll";
         const string testMessageParameter = "Berner";
@@ -49,7 +61,7 @@ public class RemoteInjectionTestSimpleParameter
 
         Thread.Sleep(500);
 
-        InjectDllIntoTarget(testProcess, GetTestDllPath(testHookLibrary), PipePlatformBase.GetUniquePipeName(), complexParameter);
+        RemoteHook.InjectDllIntoTarget(testProcess.Id, GetTestDllPath(testHookLibrary), logger, PipePlatformBase.Instance, false, complexParameter);
 
         Assert.Equal(complexParameter.Message, ReadFromProcess(testProcess));
         Assert.Equal(complexParameter.HostProcessId.ToString(), ReadFromProcess(testProcess));
@@ -57,23 +69,12 @@ public class RemoteInjectionTestSimpleParameter
         EndProcess(testProcess);
     }
 
-    internal static string GetTestDllPath(string dllName)
+    private static string GetTestDllPath(string dllName)
     {
-        return Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), TestModuleDir, dllName);
+        return Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), dllName);
     }
 
-
-    internal static void InjectDllIntoTarget(Process target, string injectionLibrary, string injectionPipeName, params object[] remoteArguments)
-    {
-        //var (coreRootPath, coreLoadLibrary, _, _, _) = ModulesPathHelper.GetCoreLoadPaths(false);
-        //var logger = Mock.Of<ILogger>();
-
-        //using var injector = new RemoteInjector(target.Id, null, injectionPipeName, logger);
-        //injector.Inject(injectionLibrary, "", new Managed.NetHostStartArguments(coreLoadLibrary, coreRootPath, false, null));
-    }
-
-
-    internal static Process StartProcess(string fileName)
+    private static Process StartProcess(string fileName)
     {
         var testProcess = new Process
         {
@@ -91,13 +92,12 @@ public class RemoteInjectionTestSimpleParameter
         return testProcess;
     }
 
-    internal static void EndProcess(Process process)
+    private static void EndProcess(Process process)
     {
         process?.Kill();
-        process = null;
     }
 
-    internal static string ReadFromProcess(Process target)
+    private static string ReadFromProcess(Process target)
     {
         return target.StandardOutput.ReadLine();
     }

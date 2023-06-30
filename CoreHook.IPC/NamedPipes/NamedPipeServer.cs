@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 
 using System;
 using System.IO;
+using System.IO.Pipes;
 using System.Threading.Tasks;
 
 namespace CoreHook.IPC.NamedPipes;
@@ -40,29 +41,50 @@ public class NamedPipeServer : NamedPipeBase
         Connect();
     }
 
-    private async void HandleMessages()
+    private async Task HandleMessages()
     {
-        while (Stream?.IsConnected ?? false)
+        var pipeStream = (NamedPipeServerStream)Stream!;
+
+        while (!_connectionStopped)
         {
-            var message = await Read();
-
-            // Exit the loop if the stream was closed after reading
-            if (!Stream.IsConnected)
+            try
             {
-                break;
+                _logger.LogInformation("{_pipeName}: waiting for connection...", _pipeName);
+
+                await pipeStream.WaitForConnectionAsync();
+
+                _logger.LogInformation("{_pipeName}: new client connected.", _pipeName);
+
+                while (pipeStream.IsConnected)
+                {
+                    var message = await Read();
+
+                    if (message is null)
+                    {
+                        _logger.LogError("A null message has been received. Ignoring.");
+                        continue;
+                    }
+
+                    // Only process the message if it has not been sent by the current thread, as both the client and server can write/read messages.
+                    if (message.SenderId != _namedPipeId)
+                    {
+                        _logger.LogDebug("Message {MessageId} will be handled by {_namedPipeId}", message.MessageId, this._namedPipeId);
+                        _handleMessage?.Invoke(this, message);
+                    }
+                }
             }
-
-            if (message is null)
+            catch (IOException e) //when (e.HResult == -2146232800 /* Broken pipe */)
             {
-                _logger.LogError("A null messagehas been received. Ignoring.");
-                continue;
-            }
+                // If the connection is stopped (i.e. we don't need to listen anymore - and don't care about it), just skip
+                if (!_connectionStopped)
+                {
+                    _logger.LogInformation("Current client was disconnected from {_pipeName}.", _pipeName);
 
-            // Only process the message if it has not been sent by the current thread, as both the client and server can write/read messages.
-            if (message.SenderId != _namedPipeId)
-            {
-                _logger.LogDebug("Message {MessageId} will be handled by {NamedPipeId}", message.MessageId, this._namedPipeId);
-                _handleMessage?.Invoke(this, message);
+                    //if (pipeStream.IsConnected)
+                    {
+                        pipeStream.Disconnect();
+                    }
+                }
             }
         }
     }
@@ -70,37 +92,23 @@ public class NamedPipeServer : NamedPipeBase
     /// <inheritdoc />
     public override async void Connect()
     {
-        try
+        if (Stream is not null)
         {
-            if (Stream is not null)
-            {
-                throw new InvalidOperationException("Pipe server already started");
-            }
-
-            var pipeStream = _platform.CreatePipeByName(_pipeName);
-
-            Stream = pipeStream;
-
-            await pipeStream.WaitForConnectionAsync();
-
-            if (!_connectionStopped)
-            {
-                _ = Task.Run(() => HandleMessages());
-            }
+            throw new InvalidOperationException("Pipe server already started");
         }
-        catch (IOException e)
-        {
-            _logger.LogError(e, "Pipe {_pipeName} broken with: ", _pipeName);
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Unhandled exception during server start");
-        }
+
+        var pipeStream = _platform.CreatePipeByName(_pipeName);
+
+        Stream = pipeStream;
+
+        await Task.Run(() => HandleMessages());
     }
 
     /// <inheritdoc />
     public new void Dispose()
     {
+        _logger.LogInformation("{_pipeName}: Disposing.", _pipeName);
+
         _connectionStopped = true;
 
         base.Dispose();

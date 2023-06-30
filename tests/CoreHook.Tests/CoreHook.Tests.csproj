@@ -48,6 +48,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\CoreHook\CoreHook.csproj" />
+    <ProjectReference Include="..\plugins\CoreHook.Tests.ComplexParameterTest\CoreHook.Tests.ComplexParameterTest.csproj" />
+    <ProjectReference Include="..\plugins\CoreHook.Tests.SimpleParameterTest\CoreHook.Tests.SimpleParameterTest.csproj" />
   </ItemGroup>
 
 </Project>

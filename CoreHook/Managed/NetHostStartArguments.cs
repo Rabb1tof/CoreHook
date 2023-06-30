@@ -22,12 +22,6 @@ public readonly struct NetHostStartArguments
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
     public readonly string ClrRootPath;
 
-    /// <summary>
-    /// Option to enable the logging module inside the HostLibrary.
-    /// </summary>
-    [MarshalAs(UnmanagedType.U1)]
-    public readonly bool VerboseLog;
-
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
     private readonly string InjectionPipeName;
 
@@ -38,11 +32,10 @@ public readonly struct NetHostStartArguments
     /// <param name="clrRootPath">See <see cref="ClrRootPath"/></param>
     /// <param name="verboseLog">See <see cref="VerboseLog"/></param>
     /// <param name="injectionPipeName"></param>
-    public NetHostStartArguments(string clrBootstrapLibrary, string clrRootPath, bool verboseLog, string injectionPipeName)
+    public NetHostStartArguments(string clrBootstrapLibrary, string clrRootPath, string injectionPipeName)
     {
         ClrBootstrapLibrary = clrBootstrapLibrary;
         ClrRootPath = clrRootPath;
-        VerboseLog = verboseLog;
         InjectionPipeName = injectionPipeName;
     }
 }

@@ -39,7 +39,7 @@
 
 #endif
 
-using string_t = std::basic_string<char_t>;
+//using string_t = std::basic_string<char_t>;
 
 typedef int (CORECLR_DELEGATE_CALLTYPE load_plugin_fn)(const void* ptr);
 
@@ -115,7 +115,7 @@ bool load_hostfxr()
 
 // <SnippetInitialize>
 // Load and initialize .NET Core and get desired function pointer for scenario
-load_assembly_and_get_function_pointer_fn get_dotnet_load_assembly(const char_t* config_path)
+load_assembly_and_get_function_pointer_fn get_dotnet_load_assembly(const char_t* config_path, HANDLE pipeHandle)
 {
 	// Load .NET Core
 	void* load_assembly_and_get_function_pointer = nullptr;
@@ -124,27 +124,33 @@ load_assembly_and_get_function_pointer_fn get_dotnet_load_assembly(const char_t*
 
 	switch (rc) {
 	case 0x00000000: // Success: Hosting components were successfully initialized 
-		// Add log or respond to initiator using a managed callback?
+		WriteToPipe(pipeHandle, LOG_LEVEL_INFO, "Success: Hosting components were successfully initialized");
 		break;
 
 	case 0x00000001: // Success_HostAlreadyInitialized: Config is compatible with already initialized hosting components
-		// Add log or respond to initiator using a managed callback?
+		WriteToPipe(pipeHandle, LOG_LEVEL_INFO, "Success_HostAlreadyInitialized: Config is compatible with already initialized hosting components");
 		break;
 
 	case 0x00000002: // Success_DifferentRuntimeProperties: Config has runtime properties that differ from already initialized hosting components
-		// Add log or respond to initiator using a managed callback?
+		WriteToPipe(pipeHandle, LOG_LEVEL_INFO, "Success_DifferentRuntimeProperties: Config has runtime properties that differ from already initialized hosting components");
 		break;
 
 	case 0x800080a5: // CoreHostIncompatibleConfig: Config is incompatible with already initialized hosting components
-		break;
-
-	case 0x80008093: // InvalidConfigFile: The .runtimeconfig.json file is invalid
-	default:
-		std::cerr << "Init failed: " << std::hex << std::showbase << rc << std::endl;
+		WriteToPipe(pipeHandle, LOG_LEVEL_ERROR, "CoreHostIncompatibleConfig: Config is incompatible with already initialized hosting components");
 		close_fptr(cxt);
 		return nullptr;
-		break;
+
+	case 0x80008093: // InvalidConfigFile: The .runtimeconfig.json file is invalid
+		WriteToPipe(pipeHandle, LOG_LEVEL_ERROR, "InvalidConfigFile: The .runtimeconfig.json file is invalid");
+		close_fptr(cxt);
+		return nullptr;
+		
+	default:
+		close_fptr(cxt);
+		return nullptr;
 	}
+
+	WriteToPipe(pipeHandle, LOG_LEVEL_INFO, "Retrieving the function pointer...");
 
 	// Get the load assembly function pointer
 	rc = get_delegate_fptr(cxt, hdt_load_assembly_and_get_function_pointer, &load_assembly_and_get_function_pointer);
@@ -154,17 +160,22 @@ load_assembly_and_get_function_pointer_fn get_dotnet_load_assembly(const char_t*
 		break;
 
 	case 0x800080a6: // HostApiUnsupportedScenario: the given delegate type is not supported using the given context
+		WriteToPipe(pipeHandle, LOG_LEVEL_ERROR, "HostApiUnsupportedScenario: the given delegate type is not supported using the given context");
+		break;
+
 	case 0x800080a7: // HostFeatureDisabled: managed feature support for native host is disabled
-		std::cerr << "Get delegate failed: " << std::hex << std::showbase << rc << std::endl;
+		WriteToPipe(pipeHandle, LOG_LEVEL_ERROR, "HostFeatureDisabled: managed feature support for native host is disabled");
 		break;
 	}
+
+	WriteToPipe(pipeHandle, LOG_LEVEL_INFO, "Function is ready.");
 
 	close_fptr(cxt);
 
 	return (load_assembly_and_get_function_pointer_fn)load_assembly_and_get_function_pointer;
 }
 
-bool inline check_arg_length(const char_t* argument, size_t max_size)
+bool inline check_arg_length(const wchar_t* argument, size_t max_size)
 {
 	return (argument == nullptr || wcsnlen(argument, max_size) >= max_size) ? false : true;
 }
@@ -181,47 +192,43 @@ SHARED_API int StartCoreCLR(const core_host_arguments* arguments)
 		return 1;// coreload::StatusCode::InvalidArgFailure;
 	}
 
-	//while (!::IsDebuggerPresent())
-	//	::Sleep(100); // to avoid 100% CPU load
+	std::wstring pipename = arguments->pipename;
+	HANDLE pipeHandle = CreateFile((STR("\\\\.\\pipe\\") + pipename).c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_WRITE_THROUGH, NULL);
 
-	//DebugBreak();
-
-	/*string_t pipename = arguments->pipename;
-	HANDLE pipeHandle = CreateFile((STR("\\\\.\\pipe\\") + pipename).c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-
-	WriteToPipe(pipeHandle, "CoreHook.NativeHost successfully loaded! Now starting the .NET Host.");*/
+	WriteToPipe(pipeHandle, LOG_LEVEL_INFO, "CoreHook.NativeHost successfully loaded! Now starting the .NET Host.");
 
 	// STEP 1: Load HostFxr and get exported hosting functions
 	if (!load_hostfxr())
 	{
 		assert(false && "Failure: load_hostfxr()");
+		WriteToPipe(pipeHandle, LOG_LEVEL_INFO, "Error, unable to load the .NET Host!");
 		return EXIT_FAILURE;
 	}
 
+	WriteToPipe(pipeHandle, LOG_LEVEL_INFO, "Now loading the assembly.");
+
 	// STEP 2: Initialize and start the .NET Core runtime
-	string_t host_path_str = arguments->assembly_file_path;
-	const string_t config_path = host_path_str.substr(0, host_path_str.length() - 4) + STR(".runtimeconfig.json");
-	load_assembly_and_get_function_pointer = get_dotnet_load_assembly(config_path.c_str());
+	std::wstring host_path_str = arguments->assembly_file_path;
+	const std::wstring config_path = host_path_str.substr(0, host_path_str.length() - 4) + STR(".runtimeconfig.json");
+	load_assembly_and_get_function_pointer = get_dotnet_load_assembly(config_path.c_str(), pipeHandle);
 
 	assert(load_assembly_and_get_function_pointer != nullptr && "Failure: StartCoreCLR()");
 
+	WriteToPipe(pipeHandle, LOG_LEVEL_INFO, "Done. Ready to execute.");
+
 	// Release the pipe handle to allow further connections
-	//CloseHandle(pipeHandle);
+	CloseHandle(pipeHandle);
 
 	return 0;
 }
 
-
-
-void WriteToPipe(const HANDLE pipeHandle, const std::string msg)
+void WriteToPipe(const HANDLE pipeHandle, const int loglevel, const std::string msg)
 {
-	const std::string message = std::string("LogMessage|1|") + msg;
+	const std::string message = std::format("{{ \"$type\": \"CoreHook.IPC.Messages.LogMessage\", \"Level\": {}, \"Message\": \"{}\" }}\r\n", loglevel, msg);
 
-	BSTR data = _com_util::ConvertStringToBSTR(message.c_str());
- 
-	WriteFile(pipeHandle, &data, sizeof(data), nullptr, NULL);
+	WriteFile(pipeHandle, message.c_str(), message.size(), nullptr, nullptr);
+	FlushFileBuffers(pipeHandle);
 }
-
 
 // Create a native function delegate for a function inside a .NET assembly
 SHARED_API int CreateAssemblyDelegate(const assembly_function_call* arguments, void** pfnDelegate)
@@ -229,8 +236,8 @@ SHARED_API int CreateAssemblyDelegate(const assembly_function_call* arguments, v
 	if (arguments == nullptr
 		|| !check_arg_length(arguments->assembly_path, max_function_name_size)
 		|| !check_arg_length(arguments->type_name_qualified, max_function_name_size)
-		|| !check_arg_length(arguments->method_name, max_function_name_size)
-		|| !check_arg_length(arguments->delegate_type_name, max_function_name_size))
+		|| !check_arg_length(arguments->method_name, max_function_name_size))
+		//|| !check_arg_length(arguments->delegate_type_name, max_function_name_size))
 	{
 		return 1;// coreload::StatusCode::InvalidArgFailure;
 	}
@@ -251,31 +258,37 @@ SHARED_API int CreateAssemblyDelegate(const assembly_function_call* arguments, v
 // Execute a function located in a .NET assembly by creating a native delegate
 SHARED_API int ExecuteAssemblyFunction(const assembly_function_call* arguments)
 {
+	//while (!::IsDebuggerPresent())
+	//	::Sleep(100); // to avoid 100% CPU load
+
+	//DebugBreak();
+
+	HANDLE pipeHandle = CreateFile((STR("\\\\.\\pipe\\") + std::wstring(arguments->pipename)).c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_WRITE_THROUGH, NULL);
+
+	const std::wstring method = arguments->method_name;
+	WriteToPipe(pipeHandle, LOG_LEVEL_INFO, std::format("Creating assembly function delegate for {}", "xxx"));
+
 	load_plugin_fn* execute_delegate = nullptr;
 	auto exit_code = CreateAssemblyDelegate(arguments, reinterpret_cast<PVOID*>(&execute_delegate));
 
 	if (SUCCEEDED(exit_code))
 	{
+		WriteToPipe(pipeHandle, LOG_LEVEL_INFO, "Done, executing...");
+		CloseHandle(pipeHandle);
 		exit_code = execute_delegate(BSTR(arguments->payload));
+
+		pipeHandle = CreateFile((STR("\\\\.\\pipe\\") + std::wstring(arguments->pipename)).c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_WRITE_THROUGH, NULL);
+		WriteToPipe(pipeHandle, LOG_LEVEL_INFO, std::format("Returned {}", exit_code));
+		CloseHandle(pipeHandle);
+	}
+	else
+	{
+		WriteToPipe(pipeHandle, LOG_LEVEL_ERROR, std::format("Failed with error code {}", exit_code));
+		CloseHandle(pipeHandle);
 	}
 
 	return exit_code;
 }
-
-//
-//bool clrstring(const string_t& str, std::vector<char>* out)
-//{
-//	out->clear();
-//
-//	// Pass -1 as we want explicit null termination in the char buffer.
-//	size_t size = ::WideCharToMultiByte(CP_UTF8, 0, str.c_str(), -1, nullptr, 0, nullptr, nullptr);
-//	if (size == 0)
-//	{
-//		return false;
-//	}
-//	out->resize(size, '\0');
-//	return ::WideCharToMultiByte(CP_UTF8, 0, str.c_str(), -1, out->data(), out->size(), nullptr, nullptr) != 0;
-//}
 
 // Shutdown the .NET Core runtime
 SHARED_API int UnloadRuntime()

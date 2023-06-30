@@ -1,5 +1,6 @@
-﻿using CoreHook.FileMonitor.Hook;
-using CoreHook.HookDefinition;
+﻿using CoreHook.BinaryInjection;
+using CoreHook.Extensions;
+using CoreHook.FileMonitor.Hook;
 using CoreHook.IPC.Messages;
 using CoreHook.IPC.NamedPipes;
 using CoreHook.IPC.Platform;
@@ -31,13 +32,13 @@ class Program
 
     private static void Main(string[] args)
     {
-        int targetProcessId = 0;
+        Process? process = null;
         string targetProgram = string.Empty;
 
         // Get the process to hook by file path for launching or process id for loading into.
-        while ((args.Length != 1) || !ParseProcessId(args[0], out targetProcessId) || !FindOnPath(args[0]))
+        while ((args.Length != 1) || !ParseProcessId(args[0], out process) || !FindOnPath(args[0]))
         {
-            if (targetProcessId > 0)
+            if (process is not null)
             {
                 break;
             }
@@ -73,17 +74,27 @@ class Program
         // Start process
         if (!string.IsNullOrWhiteSpace(targetProgram))
         {
-            targetProcessId = Process.Start(targetProgram)?.Id ?? throw new InvalidOperationException($"Failed to start the executable at {targetProgram}");
+            process = Process.Start(targetProgram);
+            if (process is null)
+            {
+                throw new InvalidOperationException($"Failed to start the executable at {targetProgram}");
+            }
         }
+
+        logger.LogInformation($"Using process {process.Id} ({process.ProcessName}) [{(process.Is64Bit() ? "x64" : "x86")}]");
 
         // Start the RPC server for handling requests from the hooked program.
         using var server = new NamedPipeServer(PipeName, IPipePlatform.Default, HandleRequest, logger);
-        Console.WriteLine($"Now listening on {PipeName}.");
+        logger.LogInformation($"Now listening on {PipeName}.");
 
         // Inject FileMonitor dll into process using default pipe platform
-        RemoteHook.InjectDllIntoTarget(targetProcessId, injectionLibrary, logger, verboseLog: true, parameters: PipeName);
+        if (!process.AttachHook(injectionLibrary, loggerFactory, PipeName))
+        {
+            return;
+        }
 
-        Console.WriteLine("Press Enter to quit.");
+        logger.LogInformation("Injection successful.");
+        logger.LogInformation("Waiting for messages... (press Enter to quit)");
         Console.ReadLine();
     }
 
@@ -93,18 +104,19 @@ class Program
     /// <param name="targetProgram">The ID or name of a process to lookup.</param>
     /// <param name="processId">The ID of the process if found.</param>
     /// <returns>True if there is an existing process with the specified ID or name.</returns>
-    private static bool ParseProcessId(string targetProgram, out int processId)
+    private static bool ParseProcessId(string targetProgram, out Process? process)
     {
-        if (!int.TryParse(targetProgram, out processId))
+        if (int.TryParse(targetProgram, out var processId))
         {
-            var process = Process.GetProcessesByName(targetProgram).FirstOrDefault();
-            if (process is not null)
-            {
-                processId = process.Id;
-                return true;
-            }
+            process = Process.GetProcessById(processId);
         }
-        return false;
+        else
+        {
+            process = Process.GetProcessesByName(targetProgram).FirstOrDefault();
+        }
+
+        return process is not null;
+
     }
 
     /// <summary>
@@ -142,7 +154,7 @@ class Program
         {
             foreach (var f in message.Queue)
             {
-                Console.WriteLine(f);
+                logger.LogInformation(f);
             }
         }
     }

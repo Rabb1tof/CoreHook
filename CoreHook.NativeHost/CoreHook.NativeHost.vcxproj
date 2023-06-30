@@ -72,7 +72,6 @@
     <LinkIncremental>false</LinkIncremental>
     <TargetName>CoreHook.NativeHost64</TargetName>
   </PropertyGroup>
-
   <!--<ItemGroup>
     <PackageReference Include="Microsoft.NETCore.DotNetAppHost" Version="7.0.5" GeneratePathProperty="True">
       <IncludeAssets>all</IncludeAssets>
@@ -86,7 +85,6 @@
       <ExcludeAssets>runtime; native</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
-
   <ItemDefinitionGroup Label="Defaults">
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -104,6 +102,8 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalIncludeDirectories>$(PkgMicrosoft_NETCore_App_Host_win-x86)\runtimes\win-x86\native\</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -122,6 +122,8 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalIncludeDirectories>$(PkgMicrosoft_NETCore_App_Host_win-x64)\runtimes\win-x64\native\</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -141,6 +143,8 @@
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalIncludeDirectories>$(PkgMicrosoft_NETCore_App_Host_win-x86)\runtimes\win-x86\native\</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -162,6 +166,8 @@
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalIncludeDirectories>$(PkgMicrosoft_NETCore_App_Host_win-x64)\runtimes\win-x64\native\</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <EnableModules>true</EnableModules>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -170,8 +176,6 @@
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);"$(PkgMicrosoft_NETCore_App_Host_win-x64)\runtimes\win-x64\native\nethost.lib"</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-
-
   <ItemGroup>
     <ClInclude Include="nativehost.h" />
     <ClCompile Include="nativehost.cpp" />
@@ -181,7 +185,6 @@
     <None Condition="'$(Platform)'=='x64'" Visible="False" Include="$(PkgMicrosoft_NETCore_App_Host_win-x64)\runtimes\win-x64\native\nethost.dll" CopyToOutputDirectory="PreserveNewest" />
     <None Condition="'$(Platform)'=='Win32'" Visible="False" Include="$(PkgMicrosoft_NETCore_App_Host_win-x86)\runtimes\win-x86\native\nethost.dll" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>
