@@ -1,13 +1,11 @@
 ﻿using CoreHook.Native;
 
-using System;
-
 namespace CoreHook.HookDefinition;
 
 /// <summary>
 /// Class used for managing the thread ACL of a hook.
 /// </summary>
-internal class HookAccessControl : IHookAccessControl
+public class HookAccessControl
 {
     private static readonly int[] DefaultThreadAcl = new int[0];
 
@@ -35,7 +33,7 @@ internal class HookAccessControl : IHookAccessControl
     {
         IsExclusive = true;
 
-        _acl = acl is null ? DefaultThreadAcl : (int[])acl.Clone();
+        _acl = (int[])acl?.Clone()! ?? DefaultThreadAcl;
 
         if (_handle == nint.Zero)
         {

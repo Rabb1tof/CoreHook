@@ -4,30 +4,19 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net7.0-windows</TargetFramework>
     <Platforms>AnyCPU</Platforms>
-    <PublishDir>..\..\..\Publish\Win32</PublishDir>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <Nullable>Enable</Nullable>
     <!--<SelfContained>true</SelfContained>-->
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <!--<OutputPath>$(OutputDir)</OutputPath>-->
-    <Prefer32Bit>false</Prefer32Bit>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors />
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <!--<OutputPath>$(OutputDir)</OutputPath>-->
-    <Prefer32Bit>false</Prefer32Bit>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <WarningsAsErrors />    
-  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" Version="0.47.0" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\CoreHook\CoreHook.csproj" />
-    <ProjectReference Include="..\..\..\CoreHook.IPC\CoreHook.IPC.csproj" />
     <ProjectReference Include="..\CoreHook.FileMonitor.Hook\CoreHook.FileMonitor.Hook.csproj" />
+    <ProjectReference Include="..\CoreHook.Uwp.FileMonitor.Hook\CoreHook.Uwp.FileMonitor.Hook.csproj" />
   </ItemGroup>
 
 </Project>

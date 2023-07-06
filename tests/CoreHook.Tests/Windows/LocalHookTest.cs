@@ -27,7 +27,7 @@ public class LocalHookTest
     [Fact]
     public void ShouldInstallDetourToFunctionAddress()
     {
-        using (var hook = LocalHook.Create(LocalHook.GetProcAddress("kernel32.dll", "Beep"), new BeepDelegate(Detour_Beep), this))
+        using (var hook = LocalHook.Create("kernel32.dll", "Beep", new BeepDelegate(Detour_Beep), this))
         {
             _beepHookCalled = false;
 
@@ -57,7 +57,7 @@ public class LocalHookTest
     [Fact]
     public void ShouldBypassDetourWithCallToOriginalFunction()
     {
-        using (var hook = LocalHook.Create(LocalHook.GetProcAddress("kernel32.dll", "GetTickCount"), new GetTickCountDelegate(Detour_GetTickCount), this))
+        using (var hook = LocalHook.Create("kernel32.dll", "GetTickCount", new GetTickCountDelegate(Detour_GetTickCount), this))
         {
             _getTickCountCalled = false;
 
@@ -86,7 +86,7 @@ public class LocalHookTest
     [Fact]
     public void ShouldBypassInstalledFunctionDetour()
     {
-        using (var hook = LocalHook.Create(LocalHook.GetProcAddress("kernel32.dll", "GetTickCount64"), new GetTickCount64Delegate(Detour_GetTickCount64), this))
+        using (var hook = LocalHook.Create("kernel32.dll", "GetTickCount64", new GetTickCount64Delegate(Detour_GetTickCount64), this))
         {
             _getTickCount64Called = false;
 
@@ -109,7 +109,7 @@ public class LocalHookTest
     [Fact]
     public void Invalid_LocalHook_Create_Detour_Delegate_Throws_ArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => LocalHook.Create(LocalHook.GetProcAddress("kernel32.dll", "CreateFileW"), null, this));
+        Assert.Throws<ArgumentNullException>(() => LocalHook.Create("kernel32.dll", "CreateFileW", null, this));
     }
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
@@ -125,7 +125,7 @@ public class LocalHookTest
     [Fact]
     public void ShouldCreateNullDetourCallback()
     {
-        using (var hook = LocalHook.Create(LocalHook.GetProcAddress("kernel32.dll", "QueryPerformanceCounter"), new QueryPerformanceCounterDelegate(Detour_QueryPerformanceCounter), null))
+        using (var hook = LocalHook.Create("kernel32.dll", "QueryPerformanceCounter", new QueryPerformanceCounterDelegate(Detour_QueryPerformanceCounter), null))
         {
             Assert.Null(hook.Callback);
             Assert.NotNull(hook.ThreadACL);
@@ -136,35 +136,6 @@ public class LocalHookTest
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall, SetLastError = true)]
     public delegate uint GetVersionDelegate();
-
-    [Fact]
-    public void ShouldEnableHookWithProperty()
-    {
-        using (var hook = HookFactory.CreateHook<GetVersionDelegate>(LocalHook.GetProcAddress("kernel32.dll", "GetVersion"), Detour_GetVersion, this))
-        {
-            // Enable the hook for all threads
-            hook.Enabled = true;
-            Assert.Equal<uint>(0, NativeMethods.GetVersion());
-            Assert.Equal<uint>(0, hook.Target());
-
-            // Disable the hook for all threads
-            hook.Enabled = false;
-            Assert.NotEqual<uint>(0, NativeMethods.GetVersion());
-            Assert.NotEqual<uint>(0, hook.Target());
-            Assert.NotEqual<uint>(0, hook.Original());
-
-            // Enable the hook for the current thread
-            hook.ThreadACL.SetInclusiveACL(new int[1]);
-            Assert.Equal<uint>(0, NativeMethods.GetVersion());
-            Assert.Equal<uint>(0, hook.Target());
-            Assert.NotEqual<uint>(0, hook.Original());
-
-            // Disable the hook for the current thread
-            hook.ThreadACL.SetExclusiveACL(new int[1]);
-            Assert.NotEqual<uint>(0, NativeMethods.GetVersion());
-            Assert.NotEqual<uint>(0, hook.Target());
-        }
-    }
 
     private uint Detour_GetVersion() => 0;
 }

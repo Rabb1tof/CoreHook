@@ -8,7 +8,7 @@ namespace CoreHook.HookDefinition;
 /// <summary>
 /// Class for creating and managing a function hook.
 /// </summary>
-public class LocalHook : CriticalFinalizerObject, IHook
+public class LocalHook : CriticalFinalizerObject, IDisposable
 {
     protected nint Handle = nint.Zero;
 
@@ -17,18 +17,18 @@ public class LocalHook : CriticalFinalizerObject, IHook
     /// </summary>
     protected readonly int[] DefaultThreadAcl = new int[0];
 
-    protected Delegate DetourFunction;
+    protected Delegate? DetourFunction;
 
     protected object ThreadSafe = new object();
 
     protected GCHandle SelfHandle;
 
-    protected IHookAccessControl AccessControl;
+    protected HookAccessControl AccessControl;
 
     /// <summary>
     /// Get the thread ACL handle for this hook.
     /// </summary>
-    public IHookAccessControl ThreadACL
+    public HookAccessControl ThreadACL
     {
         get
         {
@@ -44,7 +44,7 @@ public class LocalHook : CriticalFinalizerObject, IHook
     /// <summary>
     /// Context object passed in during detour creation to <see cref="Create"/>
     /// </summary>
-    public object Callback { get; protected set; }
+    public object? Callback { get; protected set; }
 
     /// <summary>
     /// Get the address used to call the original function,
@@ -101,14 +101,8 @@ public class LocalHook : CriticalFinalizerObject, IHook
     /// <returns>The address of the given function name in the process.</returns>
     public static nint GetProcAddress(string module, string function)
     {
-        if (module is null)
-        {
-            throw new ArgumentNullException(nameof(module));
-        }
-        if (function is null)
-        {
-            throw new ArgumentNullException(nameof(function));
-        }
+        ArgumentNullException.ThrowIfNull(module);
+        ArgumentNullException.ThrowIfNull(function);
 
         nint functionAddress = NativeApi.DetourFindFunction(module, function);
         if (functionAddress == nint.Zero)
@@ -118,6 +112,7 @@ public class LocalHook : CriticalFinalizerObject, IHook
         return functionAddress;
     }
 
+
     /// <summary>
     /// Install a managed hook with a managed delegate for the hook handler.
     /// </summary>
@@ -125,35 +120,25 @@ public class LocalHook : CriticalFinalizerObject, IHook
     /// <param name="detourFunction">The hook handler which intercepts the target function.</param>
     /// <param name="callback">A context object that will be available for reference inside the detour.</param>
     /// <returns>The handle to the function hook.</returns>
-    public static LocalHook Create(nint targetFunction, Delegate detourFunction, object callback)
+    public static LocalHook Create(string library, string methodName, Delegate detourFunction, object callback, int[]? exclusiveACL = null)
     {
+        nint targetFunction = GetProcAddress(library, methodName);
+
         var hook = new LocalHook
         {
             Callback = callback,
             TargetAddress = targetFunction,
-            DetourFunction = detourFunction,
-            Handle = Marshal.AllocCoTaskMem(nint.Size)
+            Handle = Marshal.AllocCoTaskMem(nint.Size),
+            DetourFunction = detourFunction
         };
 
         hook.SelfHandle = GCHandle.Alloc(hook, GCHandleType.Weak);
 
-        Marshal.WriteIntPtr(hook.Handle, nint.Zero);
+        InstallHook(hook, targetFunction, Marshal.GetFunctionPointerForDelegate(hook.DetourFunction), GCHandle.ToIntPtr(hook.SelfHandle));
+        //NativeApi.DetourInstallHook(targetFunction, detourFunction, callback, hook.Handle);
+        //NativeApi.DetourInstallHook(targetFunction, Marshal.GetFunctionPointerForDelegate(hook.DetourFunction), GCHandle.ToIntPtr(hook.SelfHandle), hook.Handle);
 
-        try
-        {
-            NativeApi.DetourInstallHook(targetFunction, Marshal.GetFunctionPointerForDelegate(hook.DetourFunction), GCHandle.ToIntPtr(hook.SelfHandle), hook.Handle);
-        }
-        catch (Exception e)
-        {
-            Marshal.FreeCoTaskMem(hook.Handle);
-            hook.Handle = nint.Zero;
-
-            hook.SelfHandle.Free();
-
-            throw e;
-        }
-
-        hook.AccessControl = new HookAccessControl(hook.Handle);
+        hook.ThreadACL.SetExclusiveACL(exclusiveACL ?? new int[] { 0 });
 
         return hook;
     }
@@ -165,7 +150,7 @@ public class LocalHook : CriticalFinalizerObject, IHook
     /// <param name="detourFunction">The hook handler which intercepts the target function.</param>
     /// <param name="callback">A context object that will be available for reference inside the detour.</param>
     /// <returns>The handle to the function hook.</returns>
-    public static LocalHook CreateUnmanaged(nint targetFunction, nint detourFunction, nint callback)
+    public static LocalHook CreateUnmanaged(nint targetFunction, nint detourFunction, nint callback, int[]? exclusiveACL = null)
     {
         var hook = new LocalHook
         {
@@ -176,23 +161,9 @@ public class LocalHook : CriticalFinalizerObject, IHook
 
         hook.SelfHandle = GCHandle.Alloc(hook, GCHandleType.Weak);
 
-        Marshal.WriteIntPtr(hook.Handle, nint.Zero);
+        InstallHook(hook, targetFunction, detourFunction, callback);
 
-        try
-        {
-            NativeApi.DetourInstallHook(targetFunction, detourFunction, callback, hook.Handle);
-        }
-        catch (Exception e)
-        {
-            Marshal.FreeCoTaskMem(hook.Handle);
-            hook.Handle = nint.Zero;
-
-            hook.SelfHandle.Free();
-
-            throw e;
-        }
-
-        hook.AccessControl = new HookAccessControl(hook.Handle);
+        hook.ThreadACL.SetExclusiveACL(exclusiveACL ?? new int[] { 0 });
 
         return hook;
     }
@@ -204,7 +175,7 @@ public class LocalHook : CriticalFinalizerObject, IHook
     /// <param name="targetFunction">The target function to install the detour at.</param>
     /// <param name="detourFunction">The hook handler which intercepts the target function.</param>
     /// <param name="callback">A context object that will be available for reference inside the detour.</param>
-    protected static void InstallHook(LocalHook hook, nint targetFunction, nint detourFunction, nint callback)
+    private static void InstallHook(LocalHook hook, nint targetFunction, nint detourFunction, nint callback)
     {
         Marshal.WriteIntPtr(hook.Handle, nint.Zero);
 
@@ -212,14 +183,14 @@ public class LocalHook : CriticalFinalizerObject, IHook
         {
             NativeApi.DetourInstallHook(targetFunction, detourFunction, callback, hook.Handle);
         }
-        catch (Exception e)
+        catch
         {
             Marshal.FreeCoTaskMem(hook.Handle);
             hook.Handle = nint.Zero;
 
             hook.SelfHandle.Free();
 
-            throw e;
+            throw;
         }
 
         hook.AccessControl = new HookAccessControl(hook.Handle);

@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Threading;
 
 namespace CoreHook.Loader;
 
@@ -18,15 +19,18 @@ namespace CoreHook.Loader;
 internal sealed class DependencyResolver
 {
     private readonly ICompilationAssemblyResolver _assemblyResolver;
+    private readonly AssemblyDependencyResolver _resolver;
     private readonly DependencyContext _dependencyContext;
     private readonly AssemblyLoadContext _loadContext;
+    private readonly NotificationHelper _hostNotifier;
 
     private const string CoreHookModuleName = "CoreHook";
 
     public Assembly Assembly { get; }
 
-    public DependencyResolver(string path)
+    public DependencyResolver(string path, NotificationHelper hostNotifier)
     {
+        _hostNotifier = hostNotifier;
         try
         {
             Log($"Image base path is {Path.GetDirectoryName(path)}");
@@ -60,6 +64,7 @@ internal sealed class DependencyResolver
             // if not matched by exact name or not a default corehook module (which should be matched exactly)
             if (!matched && !runtime.Name.Contains(CoreHookModuleName))
             {
+                //matched = runtime.GetDefaultAssemblyNames(_dependencyContext).Any(name => string.Equals(name.Name, name.Name, StringComparison.OrdinalIgnoreCase));
                 return runtime.Name.Contains(name.Name, StringComparison.OrdinalIgnoreCase);
             }
             return matched;
@@ -108,8 +113,9 @@ internal sealed class DependencyResolver
         _loadContext.Resolving -= OnResolving;
     }
 
-    private static void Log(string message)
+    private void Log(string message)
     {
+        _ = _hostNotifier.Log(message);
         Debug.WriteLine(message);
     }
 }

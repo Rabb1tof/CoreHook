@@ -63,7 +63,7 @@ public class SymbolsTest
     [Fact]
     public void ShouldDetourInternalFunction()
     {
-        using (var hook = LocalHook.Create(LocalHook.GetProcAddress("kernel32.dll", "InternalAddAtom"), new InternalAddAtomDelegate(Detour_InternalAddAtomHook), this))
+        using (var hook = LocalHook.Create("kernel32.dll", "InternalAddAtom", new InternalAddAtomDelegate(Detour_InternalAddAtomHook), this))
         {
             InternalAddAtomFunction = hook.OriginalAddress.ToFunction<InternalAddAtomDelegate>();
 
@@ -99,8 +99,8 @@ public class SymbolsTest
     public void ShouldDetourApiAndInternalFunctionCalledByAddAtom()
     {
         // Create the internal function and public API detours.
-        using (var hookInternal = LocalHook.Create(LocalHook.GetProcAddress("kernel32.dll", "InternalAddAtom"), new InternalAddAtomDelegate(Detour_InternalAddAtomHook), this))
-        using (var hookApi = LocalHook.Create(LocalHook.GetProcAddress("kernel32.dll", "AddAtomW"), new AddAtomWDelegate(Detour_AddAtom), this))
+        using (var hookInternal = LocalHook.Create("kernel32.dll", "InternalAddAtom", new InternalAddAtomDelegate(Detour_InternalAddAtomHook), this))
+        using (var hookApi = LocalHook.Create("kernel32.dll", "AddAtomW", new AddAtomWDelegate(Detour_AddAtom), this))
         {
             hookInternal.ThreadACL.SetInclusiveACL(new int[] { 0 });
             InternalAddAtomFunction = hookInternal.TargetAddress.ToFunction<InternalAddAtomDelegate>();
@@ -134,8 +134,8 @@ public class SymbolsTest
     [Fact]
     public void ShouldDetourApiIAndInternalFunctionUsingBypassAddress()
     {
-        using (var hookInternal = LocalHook.Create(LocalHook.GetProcAddress("kernel32.dll", "InternalAddAtom"), new InternalAddAtomDelegate(Detour_InternalAddAtomHook), this))
-        using (var hookApi = LocalHook.Create(LocalHook.GetProcAddress("kernel32.dll", "AddAtomW"), new AddAtomWDelegate(Detour_AddAtom), this))
+        using (var hookInternal = LocalHook.Create("kernel32.dll", "InternalAddAtom", new InternalAddAtomDelegate(Detour_InternalAddAtomHook), this))
+        using (var hookApi = LocalHook.Create("kernel32.dll", "AddAtomW", new AddAtomWDelegate(Detour_AddAtom), this))
         {
             hookInternal.ThreadACL.SetInclusiveACL(new int[] { 0 });
 
@@ -162,30 +162,6 @@ public class SymbolsTest
             Assert.Equal(retrievedAtomName.Length, atomName.Length);
 
             Assert.Equal(retrievedAtomName, atomName);
-
-            Assert.Equal<ushort>(0, NativeMethods.DeleteAtom(atomId));
-        }
-    }
-
-    [Fact]
-    public void ShouldDetourApiAndInternalFunctionUsingInterfaceBypassAddress()
-    {
-        using (var hookInternal = HookFactory.CreateHook<InternalFindAtom>(LocalHook.GetProcAddress("kernel32.dll", "InternalFindAtom"), Detour_InternalFindAtom, this))
-        {
-            hookInternal.ThreadACL.SetInclusiveACL(new int[] { 0 });
-        
-            InternalFindAtomFunction = hookInternal.Original;
-
-            _internalFindAtomCalled = false;
-
-            string atomName = "TestLocalAtomName";
-            ushort atomId = NativeMethods.AddAtom(atomName);
-
-            ushort foundAtomId = NativeMethods.FindAtom(atomName);
-
-            Assert.NotEqual(0, atomId);
-            Assert.True(_internalFindAtomCalled);
-            Assert.Equal(atomId, foundAtomId);
 
             Assert.Equal<ushort>(0, NativeMethods.DeleteAtom(atomId));
         }
@@ -225,7 +201,7 @@ public class SymbolsTest
     {
         _GetCurrentNlsCacheCalled = false;
 
-        using (var hook = LocalHook.Create(LocalHook.GetProcAddress("kernelbase.dll", "GetCurrentNlsCache"), new GetCurrentNlsCacheDelegate(Detour_GetCurrentNlsCache), this))
+        using (var hook = LocalHook.Create("kernelbase.dll", "GetCurrentNlsCache", new GetCurrentNlsCacheDelegate(Detour_GetCurrentNlsCache), this))
         {
             hook.ThreadACL.SetInclusiveACL(new int[] { 0 });
             GetCurrentNlsCacheFunction = hook.OriginalAddress.ToFunction<GetCurrentNlsCacheDelegate>();

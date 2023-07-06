@@ -1,7 +1,8 @@
 ﻿using CoreHook.BinaryInjection;
-using CoreHook.EntryPoint;
+using CoreHook.Extensions;
 using CoreHook.Helpers;
 using CoreHook.IPC.Platform;
+using CoreHook.Loader;
 using CoreHook.Managed;
 
 using Microsoft.Extensions.Logging;
@@ -66,15 +67,19 @@ public static class RemoteHook
 
         pipePlatform ??= IPipePlatform.Default;
 
-        var is64Bits = Process.GetProcessById(targetProcessId).Is64Bit();
+        var process = Process.GetProcessById(targetProcessId);
+        var is64Bits = process.Is64Bit();
         logger.LogInformation($"Process #{targetProcessId} is '{(is64Bits ? "64bits" : "32bits")}.");
 
         var (coreRootPath, coreLoadPath, coreRunPath, corehookPath, hostpath) = ModulesPathHelper.GetCoreLoadPaths(is64Bits);
         logger.LogInformation($".NET Path: {coreRootPath}\r\nLoader path: {coreLoadPath}\r\nRunner path: {coreRunPath}\r\nDetours lib path: {corehookPath}\r\nHost: {hostpath}");
 
-        // Make sure the native dll modules can be accessed by the UWP application
-        //GrantAllAppPackagesAccessToFile(coreRunPath);
-        //GrantAllAppPackagesAccessToFile(corehookPath);
+        if (process.IsPackagedApp(out string _))
+        {
+            // Make sure the native dll modules can be accessed by the UWP application
+            GrantAllAppPackagesAccessToFile(coreRunPath);
+            GrantAllAppPackagesAccessToFile(corehookPath);
+        }
 
         using var injector = new RemoteInjector(targetProcessId, pipePlatform, InjectionPipeName, loggerFactory);
 

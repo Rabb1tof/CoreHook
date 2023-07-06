@@ -73,17 +73,14 @@ public class NamedPipeServer : NamedPipeBase
                     }
                 }
             }
-            catch (IOException e) //when (e.HResult == -2146232800 /* Broken pipe */)
+            catch (IOException e) when ((uint)e.HResult is 0x80131620 or 0x8007006D /* Broken pipe */)
             {
                 // If the connection is stopped (i.e. we don't need to listen anymore - and don't care about it), just skip
                 if (!_connectionStopped)
                 {
                     _logger.LogInformation("Current client was disconnected from {_pipeName}.", _pipeName);
-
-                    //if (pipeStream.IsConnected)
-                    {
-                        pipeStream.Disconnect();
-                    }
+                    // Disconnecting "cleanly" as the pipe was broken without proper disconnection
+                    pipeStream.Disconnect();
                 }
             }
         }
@@ -97,10 +94,8 @@ public class NamedPipeServer : NamedPipeBase
             throw new InvalidOperationException("Pipe server already started");
         }
 
-        var pipeStream = _platform.CreatePipeByName(_pipeName);
-
-        Stream = pipeStream;
-
+        Stream = _platform.CreatePipeByName(_pipeName);
+        
         await Task.Run(() => HandleMessages());
     }
 

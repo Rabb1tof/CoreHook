@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace CoreHook.EntryPoint;
+namespace CoreHook.Loader;
 
 [StructLayout(LayoutKind.Sequential)]
 public struct ManagedRemoteInfo

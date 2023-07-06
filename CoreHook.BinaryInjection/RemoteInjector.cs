@@ -37,19 +37,20 @@ public class RemoteInjector : IDisposable
     /// <param name="passThruArguments">Arguments passed to the .NET hooking plugin once it is loaded in the target process.</param>
     public bool Inject<T>(string hostLibrary, string method, T arguments, bool waitForExit = true, params string[] libraries)
     {
+        _logger.LogInformation("Starting injection for {lib} / {method}({type})", hostLibrary, method, typeof(T));
+
         //TODO: useless when waitForExit == true?
         _injectionHelper.BeginInjection(_targetProcessId);
 
         try
         {
-            _logger.LogInformation("Injecting libraries..");
-
             foreach (var lib in libraries)
             {
+                _logger.LogInformation("Injecting library: {lib}", lib);
                 _managedProcess.InjectModule(lib);
             }
 
-            _logger.LogInformation("Injecting module...");
+            _logger.LogInformation("Injecting module: {module}", hostLibrary);
             _managedProcess.InjectModule(hostLibrary);
 
             _logger.LogInformation($"Creating thread and {(waitForExit ? "synchronously" : "asynchronously")} calling {method}..");
@@ -59,7 +60,6 @@ public class RemoteInjector : IDisposable
             if (!waitForExit)
             {
                 _logger.LogInformation($"Waiting for the injection notification...");
-                
                 _injectionHelper.WaitForInjection(_targetProcessId, 130000);
             }
 
@@ -69,7 +69,7 @@ public class RemoteInjector : IDisposable
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Unable to inject");
+            _logger.LogError(e, "Unable to inject.");
             return false;
         }
         finally

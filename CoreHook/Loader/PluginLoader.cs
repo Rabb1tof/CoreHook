@@ -34,6 +34,7 @@ public class PluginLoader
     [UnmanagedCallersOnly]//(CallConvs = new[] { typeof(CallConvCdecl) })]
     public unsafe static int Load(IntPtr payLoadPtr)
     {
+        NotificationHelper? hostNotifier = null;
         try
         {
             if (payLoadPtr == IntPtr.Zero)
@@ -48,12 +49,12 @@ public class PluginLoader
             payLoad.UserParams = payLoad.UserParams?.Zip(payLoad.UserParamsTypeNames!, (param, typeName) => param is null ? null : ((JsonElement)param).Deserialize(Type.GetType(typeName, true))).ToArray() ?? Array.Empty<object>();
 
             // Start the IPC message notifier with a connection to the host application.
-            using var hostNotifier = new NotificationHelper(payLoad.ChannelName);
+            hostNotifier = new NotificationHelper(payLoad.ChannelName);
 
             _ = hostNotifier.Log($"Initializing plugin: {payLoad.UserLibrary}.");
 
             //TODO: deps.json file is not copied to output! fix this
-            var resolver = new DependencyResolver(payLoad.UserLibrary);
+            var resolver = new DependencyResolver(payLoad.UserLibrary, hostNotifier);
 
             // Execute the plugin library's entry point and pass in the user arguments.
             var loadPluginTask = LoadPlugin(resolver.Assembly, payLoad.UserParams, hostNotifier);
@@ -63,13 +64,18 @@ public class PluginLoader
         }
         catch (ArgumentOutOfRangeException outOfRangeEx)
         {
-            Log(outOfRangeEx.ToString());
+            Log(hostNotifier, outOfRangeEx.ToString());
             throw;
         }
         catch (Exception e)
         {
-            Log(e.ToString());
+            Log(hostNotifier, e.ToString());
         }
+        finally
+        {
+            hostNotifier?.Dispose();
+        }
+
         return (int)PluginInitializationState.Failed;
     }
 
@@ -186,8 +192,9 @@ public class PluginLoader
     /// Log a message.
     /// </summary>
     /// <param name="message">The information to log.</param>
-    private static void Log(string message)
+    private static void Log(NotificationHelper? notifier, string message)
     {
+        _ = notifier?.Log(message, LogLevel.Error);
         Debug.WriteLine(message);
     }
 
@@ -196,9 +203,9 @@ public class PluginLoader
     /// </summary>
     /// <param name="notifier">Communication helper to send messages to the host application.</param>
     /// <param name="e">The exception that occurred.</param>
-    private static void LogAndThrow(NotificationHelper notifier, Exception e)
+    private static void LogAndThrow(NotificationHelper? notifier, Exception e)
     {
-        _ = notifier.Log(e.Message, LogLevel.Error);
+        _ = notifier?.Log(e.Message, LogLevel.Error);
         throw e;
     }
 }

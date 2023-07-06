@@ -31,7 +31,7 @@ internal class NotificationHelper : IDisposable
 
     internal async Task<bool> Log(string message, LogLevel level = LogLevel.Information)
     {
-        return await _pipe.TryWrite(new LogMessage(level, message));
+        return await _pipe.TryWrite(new LogMessage(message, level));
     }
 
     public void Dispose()
