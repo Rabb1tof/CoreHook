@@ -9,7 +9,6 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <!--<DocumentationFile>$(BinDir)$(Configuration)/$(DefaultTargetFramework)/$(Platform)/$(MSBuildProjectName).xml</DocumentationFile>-->
     <Authors>Thierry Bizimungu, Jérôme Saliba</Authors>
     <Copyright>Copyright (c) 2018 Thierry Bizimungu (@unknownv2) / 2023 Jérôme Saliba (@wokhan)</Copyright>
     <Product>CoreHook</Product>
@@ -31,12 +30,7 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
   
-  <!--<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>$(OutputDir)</OutputPath>
-  </PropertyGroup>-->
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <!--<OutputPath>$(OutputDir)</OutputPath>-->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors />
   </PropertyGroup>

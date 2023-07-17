@@ -62,7 +62,7 @@ public partial class EntryPoint : IEntryPoint
         return CreateFile(fileName, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
     }
 
-    private void CreateHooks()
+    protected void CreateHooks()
     {
         _createFileHook = LocalHook.Create("kernel32.dll", "CreateFileW", new CreateFileDelegate(CreateFile_Hooked), this);
         _ = _pipe.TryWrite(new LogMessage($"Success, mapped CreateFileW from 0x{_createFileHook.OriginalAddress:x} to 0x{_createFileHook.TargetAddress:x}."));

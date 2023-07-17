@@ -25,6 +25,7 @@ public sealed partial class ManagedProcess : IDisposable
     private int targetProcessId;
 
     public Process Process { get; }
+
     public SafeFileHandle SafeHandle { get; }
 
     private const int DefaultProcessAccess = (int)(

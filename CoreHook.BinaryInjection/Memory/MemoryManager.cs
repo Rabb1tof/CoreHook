@@ -1,7 +1,4 @@
-﻿
-
-
-using System;
+﻿using System;
 using System.Buffers;
 
 using System.Collections.Generic;
@@ -15,26 +12,26 @@ namespace CoreHook.BinaryInjection.Memory;
 
 public class MemoryManager : IDisposable
 {
-    private readonly List<CoreHook.BinaryInjection.Memory.MemoryAllocation> _memoryAllocations;
+    private readonly List<MemoryAllocation> _memoryAllocations;
 
     private readonly SafeHandle _process;
 
-    public IEnumerable<CoreHook.BinaryInjection.Memory.MemoryAllocation> Allocations => _memoryAllocations.AsReadOnly();
+    public IEnumerable<MemoryAllocation> Allocations => _memoryAllocations.AsReadOnly();
 
     public MemoryManager(SafeHandle process)
     {
         _process = process ?? throw new ArgumentNullException(nameof(process));
-        _memoryAllocations = new List<CoreHook.BinaryInjection.Memory.MemoryAllocation>();
+        _memoryAllocations = new List<MemoryAllocation>();
     }
 
-    public CoreHook.BinaryInjection.Memory.MemoryAllocation Allocate(int size, CoreHook.BinaryInjection.Memory.MemoryProtectionType protection, bool mustBeDisposed = true)
+    public MemoryAllocation Allocate(int size, MemoryProtectionType protection, bool mustBeDisposed = true)
     {
-        var memory = new CoreHook.BinaryInjection.Memory.MemoryAllocation(_process, size, protection, mustBeDisposed);
+        var memory = new MemoryAllocation(_process, size, protection, mustBeDisposed);
         _memoryAllocations.Add(memory);
         return memory;
     }
 
-    public void Deallocate(CoreHook.BinaryInjection.Memory.MemoryAllocation allocation)
+    public void Deallocate(MemoryAllocation allocation)
     {
         if (!allocation.IsFree)
         {
@@ -47,13 +44,7 @@ public class MemoryManager : IDisposable
         }
     }
 
-    public byte[] ReadMemory(long address)
-    {
-        throw new NotImplementedException();
-    }
-
-
-    public unsafe CoreHook.BinaryInjection.Memory.MemoryAllocation AllocateAndCopy<T>(T obj, bool mustBeDisposed = true)
+    public unsafe MemoryAllocation AllocateAndCopy<T>(T obj, bool mustBeDisposed = true)
     {
         int size;
         byte[] bytes;
@@ -79,7 +70,7 @@ public class MemoryManager : IDisposable
             }
         }
 
-        var argumentsAllocation = Allocate(size, CoreHook.BinaryInjection.Memory.MemoryProtectionType.ReadWrite, mustBeDisposed);
+        var argumentsAllocation = Allocate(size, MemoryProtectionType.ReadWrite, mustBeDisposed);
 
         argumentsAllocation.WriteBytes(bytes);
 

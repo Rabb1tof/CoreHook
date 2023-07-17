@@ -1,17 +1,15 @@
 ﻿using CoreHook.BinaryInjection;
+using CoreHook.BinaryInjection.NativeDTO;
 using CoreHook.Extensions;
-using CoreHook.Helpers;
 using CoreHook.IPC.Platform;
 using CoreHook.Loader;
-using CoreHook.Managed;
 
 using Microsoft.Extensions.Logging;
 
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Security.AccessControl;
-using System.Security.Principal;
+using System.Reflection;
 
 namespace CoreHook.HookDefinition;
 
@@ -21,33 +19,27 @@ namespace CoreHook.HookDefinition;
 public static class RemoteHook
 {
     /// <summary>
+    /// The name of the native detour module for 64-bit processes.
+    /// </summary>
+    private const string CoreHookingModule64 = "x64\\corehook64.dll";
+
+    /// <summary>
+    /// The name of the native detour module for 32-bit processes.
+    /// </summary>
+    private const string CoreHookingModule32 = "x86\\corehook32.dll";
+
+    /// <summary>
     /// The name of the pipe used for notifying the host process
     /// if the hooking plugin has been loaded successfully in
     /// the target process or if loading failed.
     /// </summary>
-    private const string InjectionPipeName = "CoreHookInjection";
+    private const string PIPE_NAME_BASE = "CoreHookInjection_";
 
     /// <summary>
     /// The .NET Assembly class that loads the .NET plugin, resolves any references, and executes
     /// the IEntryPoint.Run method for that plugin.
     /// </summary>
     private static readonly AssemblyDelegate CoreHookLoaderDelegate = new("CoreHook", "CoreHook.Loader.PluginLoader", "Load", "CoreHook.Loader.PluginLoader+LoadDelegate, CoreHook");
-        
-    /// <summary>
-    /// Check if a file path is valid, otherwise throw an exception.
-    /// </summary>
-    /// <param name="filePath">Path to a file or directory to validate.</param>
-    private static void ValidateFilePath(string filePath)
-    {
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            throw new ArgumentException($"Invalid file path {filePath}");
-        }
-        if (!File.Exists(filePath))
-        {
-            throw new FileNotFoundException($"File path {filePath} does not exist");
-        }
-    }
 
     /// <summary>
     /// Inject and load the CoreHook hooking module <paramref name="injectionLibrary"/>
@@ -58,69 +50,36 @@ public static class RemoteHook
     /// <param name="hookLibrary"></param>
     /// <param name="pipePlatform"></param>
     /// <param name="parameters"></param>
-    public static bool InjectDllIntoTarget(int targetProcessId, string hookLibrary, ILoggerFactory loggerFactory, IPipePlatform? pipePlatform = null, params object[] parameters)
+    public static bool InjectDllIntoTarget(Process targetProcess, string hookLibrary, ILoggerFactory loggerFactory, IPipePlatform? pipePlatform = null, params object[] parameters)
     {
         var logger = loggerFactory.CreateLogger("RemoteHook");
 
-        ValidateFilePath(hookLibrary);
-        logger.LogInformation($"Hook library '{hookLibrary}' found. Injecting.");
-
-        pipePlatform ??= IPipePlatform.Default;
-
-        var process = Process.GetProcessById(targetProcessId);
-        var is64Bits = process.Is64Bit();
-        logger.LogInformation($"Process #{targetProcessId} is '{(is64Bits ? "64bits" : "32bits")}.");
-
-        var (coreRootPath, coreLoadPath, coreRunPath, corehookPath, hostpath) = ModulesPathHelper.GetCoreLoadPaths(is64Bits);
-        logger.LogInformation($".NET Path: {coreRootPath}\r\nLoader path: {coreLoadPath}\r\nRunner path: {coreRunPath}\r\nDetours lib path: {corehookPath}\r\nHost: {hostpath}");
-
-        if (process.IsPackagedApp(out string _))
+        if (!File.Exists(hookLibrary))
         {
-            // Make sure the native dll modules can be accessed by the UWP application
-            GrantAllAppPackagesAccessToFile(coreRunPath);
-            GrantAllAppPackagesAccessToFile(corehookPath);
+            throw new FileNotFoundException("File path {hookLibrary} is invalid or file does not exist.", hookLibrary);
         }
 
-        using var injector = new RemoteInjector(targetProcessId, pipePlatform, InjectionPipeName, loggerFactory);
+        logger.LogInformation("Hook library '{hookLibrary}' found. Injecting.", hookLibrary);
 
-        var startCoreCLRArgs = new NetHostStartArguments(coreLoadPath, coreRootPath, InjectionPipeName);
-        if (injector.Inject(coreRunPath, "StartCoreCLR", startCoreCLRArgs, true, hostpath, corehookPath))
+        var injectionPipeName = PIPE_NAME_BASE + targetProcess.Id;
+
+        var managedFuncArgs = new ManagedFunctionArguments(CoreHookLoaderDelegate, injectionPipeName, new ManagedRemoteInfo(Environment.ProcessId, injectionPipeName, Path.GetFullPath(hookLibrary), parameters));
+
+        var corehookPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, targetProcess.Is64Bit() ? CoreHookingModule64 : CoreHookingModule32);
+        if (!File.Exists(corehookPath))
         {
-            logger.LogInformation($"Successfully started the .NET CLR in the target process.");
-
-            var managedFuncArgs = new ManagedFunctionArguments(CoreHookLoaderDelegate, InjectionPipeName, new ManagedRemoteInfo(Environment.ProcessId, InjectionPipeName, Path.GetFullPath(hookLibrary), parameters));
-            if (injector.Inject(coreRunPath, "ExecuteAssemblyFunction", managedFuncArgs, false))
-            {
-                logger.LogInformation($"Successfully executed target .NET method.");
-                return true;
-            }
+            throw new FileNotFoundException("File path {corehookPath} is invalid or file does not exist.", corehookPath);
         }
 
-        return false;
+        if (targetProcess.IsPackagedApp(out string _))
+        {
+            UwpSecurityHelper.GrantAllAppPackagesAccessToFile(corehookPath);
+        }
+
+        var coreLoadPath = Assembly.GetExecutingAssembly().Location;
+
+        using var injector = new RemoteInjector(targetProcess, pipePlatform ?? IPipePlatform.Default, injectionPipeName, loggerFactory);
+        injector.InjectLibraries(corehookPath);
+        return injector.InjectManaged(coreLoadPath, managedFuncArgs);
     }
-
-    private static readonly SecurityIdentifier AllAppPackagesSid = new SecurityIdentifier("S-1-15-2-1");
-
-    //TODO: move in a utility class with conditional compilation for UWP
-    /// <summary>
-    /// Grant ALL_APPLICATION_PACKAGES permissions to a file at <paramref name="fileName"/>.
-    /// </summary>
-    /// <param name="fileName">The file to be granted ALL_APPLICATION_PACKAGES permissions.</param>
-    private static void GrantAllAppPackagesAccessToFile(string fileName)
-    {
-        try
-        {
-            var fileInfo = new FileInfo(fileName);
-            FileSecurity acl = fileInfo.GetAccessControl();
-
-            var rule = new FileSystemAccessRule(AllAppPackagesSid, FileSystemRights.ReadAndExecute, AccessControlType.Allow);
-            acl.SetAccessRule(rule);
-
-            fileInfo.SetAccessControl(acl);
-        }
-        catch
-        {
-        }
-    }
-
 }

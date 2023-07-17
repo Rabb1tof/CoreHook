@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace CoreHook.Uwp.FileMonitor.Hook;
 
-public partial class EntryPoint : IEntryPoint
+public partial class EntryPoint : CoreHook.FileMonitor.Hook.EntryPoint, IEntryPoint
 {
     private LocalHook _createFileHook;
     private NamedPipeClient _pipe;
@@ -21,28 +21,7 @@ public partial class EntryPoint : IEntryPoint
     // The number of arguments in the constructor and Run method
     // must be equal to the number passed during injection
     // in the FileMonitor application.
-    public EntryPoint(string _) { }
-
-    public void Run(string pipeName)
-    {
-        Task.Run(() =>
-        {
-            try
-            {
-                _pipe = new NamedPipeClient(pipeName, true);
-
-                _ = _pipe.TryWrite(new LogMessage("Hook pipe is connected, creating hooks."));
-
-                CreateHooks();
-
-                _ = _pipe.TryWrite(new LogMessage("Success!"));
-            }
-            catch (Exception e)
-            {
-                _ = _pipe?.TryWrite(new LogMessage(e.Message, LogLevel.Error));
-            }
-        });
-    }
+    public EntryPoint(string _) : base(_) { }
 
     [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode, SetLastError = true)]
     delegate IntPtr CreateFile2Delegate(string fileName, uint desiredAccess, uint shareMode, uint creationDisposition, IntPtr pCreateExParams);
@@ -87,7 +66,7 @@ public partial class EntryPoint : IEntryPoint
         return CreateFile(fileName, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
     }
 
-    private void CreateHooks()
+    protected new void CreateHooks()
     {
         _createFileHook = LocalHook.Create("kernel32.dll", "CreateFileW", new CreateFileDelegate(CreateFile_Hooked), this);
         _ = _pipe.TryWrite(new LogMessage($"Success, mapped CreateFileW from 0x{_createFileHook.OriginalAddress:x} to 0x{_createFileHook.TargetAddress:x}."));

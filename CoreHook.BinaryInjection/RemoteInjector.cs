@@ -1,20 +1,23 @@
-﻿using CoreHook.BinaryInjection.RemoteInjection;
+﻿using CoreHook.BinaryInjection.NativeDTO;
+using CoreHook.BinaryInjection.RemoteInjection;
 using CoreHook.IPC.Platform;
 
 using Microsoft.Extensions.Logging;
 
 using System;
+using System.Diagnostics;
 
 namespace CoreHook.BinaryInjection;
 
 public class RemoteInjector : IDisposable
 {
-    private readonly int _targetProcessId;
+    private readonly Process _targetProcess;
     private readonly ManagedProcess _managedProcess;
     private readonly ILogger _logger;
     private readonly InjectionHelper _injectionHelper;
+    private readonly string _injectionPipeName;
 
-    public RemoteInjector(int targetProcessId, IPipePlatform pipePlatform, string injectionPipeName, ILoggerFactory logFactory)
+    public RemoteInjector(Process targetProcess, IPipePlatform pipePlatform, string injectionPipeName, ILoggerFactory logFactory)
     {
         if (string.IsNullOrWhiteSpace(injectionPipeName))
         {
@@ -22,9 +25,31 @@ public class RemoteInjector : IDisposable
         }
 
         _logger = logFactory.CreateLogger<RemoteInjector>();
-        _targetProcessId = targetProcessId;
-        _managedProcess = new ManagedProcess(targetProcessId);
+
+        _targetProcess = targetProcess;
+        _managedProcess = new ManagedProcess(targetProcess);
+
+        _injectionPipeName = injectionPipeName;
         _injectionHelper = new InjectionHelper(injectionPipeName, pipePlatform, _logger);
+    }
+
+    public bool InjectLibraries(params string[] libraries)
+    {
+        try
+        {
+            foreach (var lib in libraries)
+            {
+                _logger.LogInformation("Injecting library: {lib}", lib);
+                _managedProcess.InjectModule(lib);
+            }
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Unable to inject.");
+            return false;
+        }
     }
 
     /// <summary>
@@ -35,21 +60,15 @@ public class RemoteInjector : IDisposable
     /// <param name="remoteInjectorConfig">Configuration settings for starting CoreCLR and executing .NET assemblies.</param>
     /// <param name="pipePlatform">Class for creating pipes for communication with the target process.</param>
     /// <param name="passThruArguments">Arguments passed to the .NET hooking plugin once it is loaded in the target process.</param>
-    public bool Inject<T>(string hostLibrary, string method, T arguments, bool waitForExit = true, params string[] libraries)
+    public bool InjectNative<T>(string hostLibrary, string method, T arguments, bool waitForExit = true)
     {
         _logger.LogInformation("Starting injection for {lib} / {method}({type})", hostLibrary, method, typeof(T));
 
         //TODO: useless when waitForExit == true?
-        _injectionHelper.BeginInjection(_targetProcessId);
+        _injectionHelper.BeginInjection(_targetProcess.Id);
 
         try
         {
-            foreach (var lib in libraries)
-            {
-                _logger.LogInformation("Injecting library: {lib}", lib);
-                _managedProcess.InjectModule(lib);
-            }
-
             _logger.LogInformation("Injecting module: {module}", hostLibrary);
             _managedProcess.InjectModule(hostLibrary);
 
@@ -60,7 +79,7 @@ public class RemoteInjector : IDisposable
             if (!waitForExit)
             {
                 _logger.LogInformation($"Waiting for the injection notification...");
-                _injectionHelper.WaitForInjection(_targetProcessId, 130000);
+                _injectionHelper.WaitForInjection(_targetProcess.Id);
             }
 
             _logger.LogInformation($"Injection done!");
@@ -74,8 +93,39 @@ public class RemoteInjector : IDisposable
         }
         finally
         {
-            _injectionHelper.EndInjection(_targetProcessId);
+            _injectionHelper.EndInjection(_targetProcess.Id);
         }
+    }
+
+    public bool InjectManaged(string coreLoadPath, ManagedFunctionArguments managedFuncArgs)
+    {
+        var is64Bits = _targetProcess.Is64Bit();
+        _logger.LogInformation("Process #{targetProcessId} is {64or32}.", _targetProcess.Id, is64Bits ? "64bits" : "32bits");
+
+        var paths = ModulesPathHelper.GetCoreClrPaths(is64Bits, coreLoadPath);
+        _logger.LogInformation(".NET Path: {coreRootPath}\r\nNativeHost path: {coreHostPath}\r\nNethost path: {nethostLibPath}", paths.coreRootPath, paths.coreHostPath, paths.nethostLibPath);
+
+        if (_targetProcess.IsPackagedApp(out string _))
+        {
+            // Make sure the native dll modules can be accessed by the UWP application
+            UwpSecurityHelper.GrantAllAppPackagesAccessToFile(paths.coreHostPath);
+        }
+
+        var startCoreCLRArgs = new NetHostStartArguments(coreLoadPath, paths.coreRootPath, _injectionPipeName);
+
+        if (InjectLibraries(paths.nethostLibPath) && InjectNative(paths.coreHostPath, "StartCoreCLR", startCoreCLRArgs, true))
+        {
+            _logger.LogInformation("Successfully started the .NET CLR in the target process.");
+
+            if (InjectNative(paths.coreHostPath, "ExecuteAssemblyFunction", managedFuncArgs, false))
+            {
+                _logger.LogInformation("Successfully executed target .NET method.");
+                return true;
+            }
+        }
+
+
+        return false;
     }
 
     ~RemoteInjector()
@@ -88,4 +138,5 @@ public class RemoteInjector : IDisposable
         _managedProcess.Dispose();
         _injectionHelper.Dispose();
     }
+
 }

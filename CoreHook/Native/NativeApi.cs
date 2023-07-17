@@ -9,7 +9,7 @@ public static class NativeApi
     /// <summary>
     /// Determine if the current application is 32 or 64 bit.
     /// </summary>
-    public static readonly bool Is64Bit = nint.Size == 8;
+    public static readonly bool Is64Bit = Environment.Is64BitProcess;
 
     internal const int STATUS_SUCCESS = 0;
 
@@ -224,8 +224,8 @@ public static class NativeApi
         {
             HandleErrorCode(NativeApi32.DetourGetHookBypassAddress(handle, out address));
         }
-
     }
+
 
     public static bool DetourCreateProcessWithDllExA(
         string lpApplicationName,
@@ -257,23 +257,21 @@ public static class NativeApi
                     lpDllName,
                     pfCreateProcessW);
         }
-        else
-        {
-            return NativeApi32.DetourCreateProcessWithDllExA(
-                    lpApplicationName,
-                    lpCommandLine,
-                    lpProcessAttributes,
-                    lpThreadAttributes,
-                    bInheritHandles,
-                    dwCreationFlags,
-                    lpEnvironment,
-                    lpCurrentDirectory,
-                    lpStartupInfo,
-                    lpProcessInformation,
-                    lpDllName,
-                    pfCreateProcessW);
-        }
+        return NativeApi32.DetourCreateProcessWithDllExA(
+        lpApplicationName,
+        lpCommandLine,
+        lpProcessAttributes,
+        lpThreadAttributes,
+        bInheritHandles,
+        dwCreationFlags,
+        lpEnvironment,
+        lpCurrentDirectory,
+        lpStartupInfo,
+        lpProcessInformation,
+        lpDllName,
+        pfCreateProcessW);
     }
+
     public static bool DetourCreateProcessWithDllExW(
         string lpApplicationName,
         string lpCommandLine,
@@ -304,22 +302,20 @@ public static class NativeApi
                     lpDllName,
                     pfCreateProcessW);
         }
-        else
-        {
-            return NativeApi32.DetourCreateProcessWithDllExW(
-                    lpApplicationName,
-                    lpCommandLine,
-                    lpProcessAttributes,
-                    lpThreadAttributes,
-                    bInheritHandles,
-                    dwCreationFlags,
-                    lpEnvironment,
-                    lpCurrentDirectory,
-                    lpStartupInfo,
-                    lpProcessInformation,
-                    lpDllName,
-                    pfCreateProcessW);
-        }
+
+        return NativeApi32.DetourCreateProcessWithDllExW(
+        lpApplicationName,
+        lpCommandLine,
+        lpProcessAttributes,
+        lpThreadAttributes,
+        bInheritHandles,
+        dwCreationFlags,
+        lpEnvironment,
+        lpCurrentDirectory,
+        lpStartupInfo,
+        lpProcessInformation,
+        lpDllName,
+        pfCreateProcessW);
     }
     public static bool DetourCreateProcessWithDllsExA(
         string lpApplicationName,
@@ -353,23 +349,21 @@ public static class NativeApi
                     rlpDlls,
                     pfCreateProcessW);
         }
-        else
-        {
-            return NativeApi32.DetourCreateProcessWithDllsExA(
-                    lpApplicationName,
-                    lpCommandLine,
-                    lpProcessAttributes,
-                    lpThreadAttributes,
-                    bInheritHandles,
-                    dwCreationFlags,
-                    lpEnvironment,
-                    lpCurrentDirectory,
-                    lpStartupInfo,
-                    lpProcessInformation,
-                    nDlls,
-                    rlpDlls,
-                    pfCreateProcessW);
-        }
+
+        return NativeApi32.DetourCreateProcessWithDllsExA(
+        lpApplicationName,
+        lpCommandLine,
+        lpProcessAttributes,
+        lpThreadAttributes,
+        bInheritHandles,
+        dwCreationFlags,
+        lpEnvironment,
+        lpCurrentDirectory,
+        lpStartupInfo,
+        lpProcessInformation,
+        nDlls,
+        rlpDlls,
+        pfCreateProcessW);
     }
     public static bool DetourCreateProcessWithDllsExW(
         string lpApplicationName,
@@ -403,37 +397,29 @@ public static class NativeApi
                     rlpDlls,
                     pfCreateProcessW);
         }
-        else
-        {
-            return NativeApi32.DetourCreateProcessWithDllsExW(
-                    lpApplicationName,
-                    lpCommandLine,
-                    lpProcessAttributes,
-                    lpThreadAttributes,
-                    bInheritHandles,
-                    dwCreationFlags,
-                    lpEnvironment,
-                    lpCurrentDirectory,
-                    lpStartupInfo,
-                    lpProcessInformation,
-                    nDlls,
-                    rlpDlls,
-                    pfCreateProcessW);
-        }
+
+        return NativeApi32.DetourCreateProcessWithDllsExW(
+        lpApplicationName,
+        lpCommandLine,
+        lpProcessAttributes,
+        lpThreadAttributes,
+        bInheritHandles,
+        dwCreationFlags,
+        lpEnvironment,
+        lpCurrentDirectory,
+        lpStartupInfo,
+        lpProcessInformation,
+        nDlls,
+        rlpDlls,
+        pfCreateProcessW);
     }
-    public static nint DetourFindFunction(
-        string lpModule,
-        string lpFunction)
+
+    public static nint DetourFindFunction(string lpModule, string lpFunction)
     {
         if (Is64Bit)
         {
-            return NativeApi64.DetourFindFunction(lpModule,
-                lpFunction);
+            return NativeApi64.DetourFindFunction(lpModule, lpFunction);
         }
-        else
-        {
-            return NativeApi32.DetourFindFunction(lpModule,
-                lpFunction);
-        }
+        return NativeApi32.DetourFindFunction(lpModule, lpFunction);
     }
 }

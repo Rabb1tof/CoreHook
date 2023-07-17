@@ -1,4 +1,4 @@
-﻿using CoreHook.BinaryInjection.IPC;
+﻿using CoreHook.BinaryInjection;
 using CoreHook.IPC.Messages;
 using CoreHook.IPC.NamedPipes;
 

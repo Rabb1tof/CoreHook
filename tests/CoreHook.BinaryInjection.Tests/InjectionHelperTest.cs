@@ -1,6 +1,4 @@
-﻿using CoreHook.BinaryInjection;
-using CoreHook.BinaryInjection.IPC;
-using CoreHook.IPC.NamedPipes;
+﻿using CoreHook.IPC.NamedPipes;
 
 using Microsoft.Extensions.Logging;
 

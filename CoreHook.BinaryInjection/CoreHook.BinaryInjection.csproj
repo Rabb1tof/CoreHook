@@ -8,12 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <!--<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>$(OutputDir)</OutputPath>
-  </PropertyGroup>-->
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <!--<OutputPath>$(OutputDir)</OutputPath>-->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors />
   </PropertyGroup>
@@ -21,7 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CoreHook.IPC\CoreHook.IPC.csproj" />
   </ItemGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
@@ -29,4 +24,16 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\Win32\CoreHook.NativeHost32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\CoreHook.NativeHost64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\Win32\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <Target BeforeTargets="Build" Name="BuildNativeHost">
+    <MSBuild Projects="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj" Properties="Platform=x64" />
+    <MSBuild Projects="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj" Properties="Platform=Win32" />
+  </Target>
 </Project>

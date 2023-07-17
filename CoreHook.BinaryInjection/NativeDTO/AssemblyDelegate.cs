@@ -1,33 +1,33 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace CoreHook.Managed;
+namespace CoreHook.BinaryInjection.NativeDTO;
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 public readonly struct AssemblyDelegate
 {
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-    public readonly string AssemblyPath;
+    private readonly string _assemblyPath;
 
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-    public readonly string TypeNameQualified;
+    private readonly string _typeNameQualified;
 
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-    public readonly string MethodName;
+    private readonly string _methodName;
 
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
-    public readonly string? DelegateTypeName;
+    private readonly string? _delegateTypeName;
 
     public AssemblyDelegate(string assemblyName, string typeName, string methodName) : this()
     {
         var assembly = Assembly.Load(assemblyName);
-        AssemblyPath = assembly.Location;
-        TypeNameQualified = Assembly.CreateQualifiedName(assemblyName, typeName);
-        MethodName = methodName;
+        _assemblyPath = assembly.Location;
+        _typeNameQualified = Assembly.CreateQualifiedName(assemblyName, typeName);
+        _methodName = methodName;
     }
 
     public AssemblyDelegate(string assemblyName, string typeName, string methodName, string? delegateTypeName) : this(assemblyName, typeName, methodName)
     {
-        DelegateTypeName = delegateTypeName;
+        _delegateTypeName = delegateTypeName;
     }
 }

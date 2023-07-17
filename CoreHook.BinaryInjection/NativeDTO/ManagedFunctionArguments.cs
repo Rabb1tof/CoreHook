@@ -1,8 +1,9 @@
-﻿
+﻿using CoreHook.BinaryInjection.NativeDTO;
+
 using System.Runtime.InteropServices;
 using System.Text.Json;
 
-namespace CoreHook.Managed;
+namespace CoreHook.BinaryInjection.NativeDTO;
 
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
 public readonly struct ManagedFunctionArguments

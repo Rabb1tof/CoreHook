@@ -15,8 +15,6 @@ namespace CoreHook.IPC.NamedPipes;
 /// </summary>
 public class NamedPipeServer : NamedPipeBase
 {
-    private readonly ILogger _logger;
-
     private readonly Action<INamedPipe, CustomMessage> _handleMessage;
 
     private readonly IPipePlatform _platform;
@@ -49,11 +47,11 @@ public class NamedPipeServer : NamedPipeBase
         {
             try
             {
-                _logger.LogInformation("{_pipeName}: waiting for connection...", _pipeName);
+                _logger.LogInformation("{pipeName}: waiting for connection...", _pipeName);
 
                 await pipeStream.WaitForConnectionAsync();
 
-                _logger.LogInformation("{_pipeName}: new client connected.", _pipeName);
+                _logger.LogInformation("{pipeName}: new client connected.", _pipeName);
 
                 while (pipeStream.IsConnected)
                 {
@@ -68,7 +66,7 @@ public class NamedPipeServer : NamedPipeBase
                     // Only process the message if it has not been sent by the current thread, as both the client and server can write/read messages.
                     if (message.SenderId != _namedPipeId)
                     {
-                        _logger.LogDebug("Message {MessageId} will be handled by {_namedPipeId}", message.MessageId, this._namedPipeId);
+                        _logger.LogDebug("Message {id} will be handled by {pipeId}", message.MessageId, this._namedPipeId);
                         _handleMessage?.Invoke(this, message);
                     }
                 }
@@ -78,7 +76,7 @@ public class NamedPipeServer : NamedPipeBase
                 // If the connection is stopped (i.e. we don't need to listen anymore - and don't care about it), just skip
                 if (!_connectionStopped)
                 {
-                    _logger.LogInformation("Current client was disconnected from {_pipeName}.", _pipeName);
+                    _logger.LogInformation("Current client was disconnected from {pipeName}.", _pipeName);
                     // Disconnecting "cleanly" as the pipe was broken without proper disconnection
                     pipeStream.Disconnect();
                 }
@@ -102,7 +100,7 @@ public class NamedPipeServer : NamedPipeBase
     /// <inheritdoc />
     public new void Dispose()
     {
-        _logger.LogInformation("{_pipeName}: Disposing.", _pipeName);
+        _logger.LogInformation("{pipeName}: Disposing.", _pipeName);
 
         _connectionStopped = true;
 

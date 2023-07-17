@@ -11,7 +11,6 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <!--<DocumentationFile>$(BinDir)$(Configuration)/$(DefaultTargetFramework)/$(Platform)/$(MSBuildProjectName).xml</DocumentationFile>-->
     <Authors>Thierry Bizimungu, Jérôme Saliba</Authors>
     <Copyright>Copyright (c) 2018 Thierry Bizimungu (@unknownv2) / 2023 Jérôme Saliba (@wokhan)</Copyright>
     <Product>CoreHook</Product>
@@ -37,12 +36,7 @@
     <InternalsVisibleTo Include="CoreHook.Tests" />
   </ItemGroup>
 
-  <!--<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>$(OutputDir)</OutputPath>
-  </PropertyGroup>-->
-
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <!--<OutputPath>$(OutputDir)</OutputPath>-->
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <Optimize>true</Optimize>
@@ -59,23 +53,12 @@
 
   <ItemGroup>
     <None Include="Native\corehook32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
-    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\Win32\CoreHook.NativeHost32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
-    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\Win32\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
     <None Include="Native\corehook64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
-    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\CoreHook.NativeHost64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
-    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
   </ItemGroup>
-
+  
   <ItemGroup>
     <ProjectReference Include="..\CoreHook.BinaryInjection\CoreHook.BinaryInjection.csproj" />
     <ProjectReference Include="..\CoreHook.IPC\CoreHook.IPC.csproj" />
-    <!--<ProjectReference Include="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <OutputItemType>Content</OutputItemType>
-      <IncludeAssets>All</IncludeAssets>
-      <Private>True</Private>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </ProjectReference>-->
   </ItemGroup>
 
   <!--
@@ -88,10 +71,4 @@
       <ContentWithTargetPath Include="$(ProjectRuntimeConfigFilePath)" Condition="'$(GenerateRuntimeConfigurationFiles)' == 'true'" CopyToOutputDirectory="PreserveNewest" TargetPath="$(ProjectRuntimeConfigFileName)" />
     </ItemGroup>
   </Target>
-
-  <Target BeforeTargets="Build" Name="BuildNativeHost">
-    <MSBuild Projects="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj" Properties="Platform=x64" />
-    <MSBuild Projects="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj" Properties="Platform=Win32" />
-  </Target>
-
 </Project>

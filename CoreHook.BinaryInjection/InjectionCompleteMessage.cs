@@ -1,6 +1,6 @@
 ﻿using CoreHook.IPC.Messages;
 
-namespace CoreHook.BinaryInjection.IPC;
+namespace CoreHook.BinaryInjection;
 
 /// <summary>
 /// A message containing information about an attempt to load

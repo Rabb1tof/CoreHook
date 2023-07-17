@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 using Windows.Win32.System.Memory;
 
@@ -20,22 +21,21 @@ public partial class MemoryAllocation
         return allocationAddress;
     }
 
-    public int WriteBytes(byte[] byteArray)
+    public unsafe int WriteBytes(byte[] byteArray)
     {
-        //nuint bytesWritten; // Probably have to allocate this first - weird that it's not handled by CsWin32?
-        //NativeMethods.WriteProcessMemory(_processHandle, Address.ToPointer(), &byteArray, (nuint)byteArray.Length, &bytesWritten))
-        if (!Interop.Kernel32.WriteProcessMemory(_processHandle, Address, byteArray, byteArray.Length, out IntPtr bytesWritten))
+        var bytesWritten = new nuint();
+
+        if (!NativeMethods.WriteProcessMemory(_processHandle, (void*)Address, (void*)Marshal.UnsafeAddrOfPinnedArrayElement(byteArray, 0), (nuint)byteArray.Length, &bytesWritten))
         {
             throw new Win32Exception("Failed to write to process memory");
         }
-        var expectedWriteCount = byteArray.Length;
-        var bytesWrittenCount = bytesWritten.ToInt32();
-        if (byteArray.Length != bytesWrittenCount)
+
+        if (byteArray.Length != (int)bytesWritten)
         {
-            throw new Win32Exception($"Failed to write all data to process ({bytesWrittenCount} != {expectedWriteCount}).");
+            throw new Win32Exception($"Failed to write all data to process ({bytesWritten} != {byteArray.Length}).");
         }
 
-        return bytesWrittenCount;
+        return (int)bytesWritten;
     }
 
     private unsafe void Free()

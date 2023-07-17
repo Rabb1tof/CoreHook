@@ -10,12 +10,12 @@ internal class PipePlatformBase : IPipePlatform
 
     public static string GetUniquePipeName() => Path.GetRandomFileName();
 
-    public NamedPipeServerStream CreatePipeByName(string pipeName, string serverName)
+    public NamedPipeServerStream CreatePipeByName(string pipeName, string serverName, int instances)
     {
         return new NamedPipeServerStream(
             pipeName,
             PipeDirection.InOut,
-            1,
+            instances,
             PipeTransmissionMode.Byte,
             PipeOptions.Asynchronous,
             65536,

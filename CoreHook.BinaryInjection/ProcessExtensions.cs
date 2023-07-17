@@ -2,6 +2,7 @@
 using Microsoft.Win32.SafeHandles;
 
 using System;
+using System.Buffers;
 using System.ComponentModel;
 using System.Diagnostics;
 
@@ -11,8 +12,29 @@ using Windows.Win32.System.Threading;
 
 namespace CoreHook.BinaryInjection;
 
-public static class ProcessExtensions
+public static partial class ProcessExtensions
 {
+    [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int GetPackageFullName(nint hProcess, out uint packageFullNameLength, [Out] char[] packageFullName);
+
+    public static bool IsPackagedApp(this Process process, out string packageName)
+    {
+        var res = GetPackageFullName(process.Handle, out uint packageNameLength, null);
+
+        if (res != 0 && packageNameLength > 0)
+        {
+            char[] buffer = ArrayPool<char>.Shared.Rent((int)packageNameLength);
+            GetPackageFullName(process.Handle, out packageNameLength, buffer);
+
+            packageName = new string(buffer, 0, (int)packageNameLength - 1);
+            return true;
+        }
+
+        packageName = String.Empty;
+
+        return false;
+    }
+
     public static bool Is64Bit(this Process process)
     {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))

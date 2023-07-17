@@ -16,5 +16,5 @@ public interface IPipePlatform
     /// <param name="pipeName">The name of the pipe.</param>
     /// <param name="serverName">The name of the remote computer, or "." to specify the local computer.</param>
     /// <returns></returns>
-    NamedPipeServerStream CreatePipeByName(string pipeName, string serverName = ".");
+    NamedPipeServerStream CreatePipeByName(string pipeName, string serverName = ".", int instance = 1);
 }

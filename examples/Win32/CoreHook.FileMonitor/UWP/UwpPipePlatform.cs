@@ -40,9 +40,9 @@ public class UwpPipePlatform : IPipePlatform
     /// <param name="pipeName">The name of the pipe to create.</param>
     /// <param name="serverName">The name of the remote computer, or "." to specify the local computer.</param>
     /// <returns>The named pipe used for communicating with UWP applications.</returns>
-    public NamedPipeServerStream CreatePipeByName(string pipeName, string serverName = ".")
+    public NamedPipeServerStream CreatePipeByName(string pipeName, string serverName, int instances)
     {
-        var pipeServerStream = NamedPipeServerStreamAcl.Create(pipeName, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 65536, 65536, CreateUwpPipeSecurity());
+        var pipeServerStream = NamedPipeServerStreamAcl.Create(pipeName, PipeDirection.InOut, instances, PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 65536, 65536, CreateUwpPipeSecurity());
         
         return pipeServerStream;
     }

@@ -146,7 +146,7 @@ public class PluginLoader
     /// <returns>Information about the matched method.</returns>
     private static MethodInfo? FindMatchingMethod(Type objectType, string methodName, object[] paramArray)
     {
-        return objectType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+        return objectType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
                          .FirstOrDefault(method => method.Name == methodName && (paramArray is null || MethodMatchesParameters(method, paramArray)));
     }
 

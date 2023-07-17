@@ -135,9 +135,7 @@ public class LocalHook : CriticalFinalizerObject, IDisposable
         hook.SelfHandle = GCHandle.Alloc(hook, GCHandleType.Weak);
 
         InstallHook(hook, targetFunction, Marshal.GetFunctionPointerForDelegate(hook.DetourFunction), GCHandle.ToIntPtr(hook.SelfHandle));
-        //NativeApi.DetourInstallHook(targetFunction, detourFunction, callback, hook.Handle);
-        //NativeApi.DetourInstallHook(targetFunction, Marshal.GetFunctionPointerForDelegate(hook.DetourFunction), GCHandle.ToIntPtr(hook.SelfHandle), hook.Handle);
-
+      
         hook.ThreadACL.SetExclusiveACL(exclusiveACL ?? new int[] { 0 });
 
         return hook;

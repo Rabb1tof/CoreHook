@@ -1,5 +1,7 @@
 ﻿using CoreHook.IPC.Messages;
 
+using Microsoft.Extensions.Logging;
+
 using System;
 using System.IO;
 using System.IO.Pipes;
@@ -9,6 +11,8 @@ using System.Threading.Tasks;
 namespace CoreHook.IPC.NamedPipes;
 public abstract class NamedPipeBase : INamedPipe
 {
+    protected ILogger _logger;
+
     protected string _pipeName;
 
     protected string _namedPipeId = Guid.NewGuid().ToString();
@@ -60,15 +64,20 @@ public abstract class NamedPipeBase : INamedPipe
             throw new IOException("Pipe connection is closed. Unable to read.");
         }
 
+        string? message = null;
         try
         {
-            var message = await _reader.ReadLineAsync();
+            message = await _reader.ReadLineAsync();
             if (message is not null)
             {
                 return CustomMessage.Deserialize(message);
             }
         }
-        catch (IOException) { }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Unable to deserialize.\r\nBody: {message}", message);
+            Console.WriteLine();
+        }
 
         return null;
     }
