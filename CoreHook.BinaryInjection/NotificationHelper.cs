@@ -5,6 +5,7 @@ using CoreHook.IPC.NamedPipes;
 using Microsoft.Extensions.Logging;
 
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace CoreHook.Loader;
@@ -12,10 +13,12 @@ namespace CoreHook.Loader;
 internal class NotificationHelper : IDisposable
 {
     private readonly INamedPipe _pipe;
+    private readonly ILogger _logger;
 
-    internal NotificationHelper(string pipeName)
+    internal NotificationHelper(string pipeName, ILogger logger)
     {
-        _pipe = new NamedPipeClient(pipeName, true);
+        _pipe = new NamedPipeClient(pipeName, logger, true);
+        _logger = logger;
     }
 
     /// <summary>
@@ -36,6 +39,7 @@ internal class NotificationHelper : IDisposable
 
     public void Dispose()
     {
+        _logger.LogInformation("Disposing communication pipe '{pipeName}'.", _pipe.PipeName);
         _pipe?.Dispose();
     }
 }

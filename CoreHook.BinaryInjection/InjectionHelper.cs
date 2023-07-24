@@ -34,27 +34,25 @@ public class InjectionHelper : IDisposable
     /// <param name="channel">The server communication channel.</param>
     private void HandleMessage(INamedPipe _, CustomMessage message)
     {
-        switch (message.GetType().Name)
+        if (message is LogMessage logMessageData)
         {
-            case nameof(InjectionCompleteMessage):
-                var messageData = (InjectionCompleteMessage)message;
-                if (messageData.Completed)
-                {
-                    InjectionCompleted(messageData.ProcessId);
-                }
-                else
-                {
-                    throw new InjectionLoadException($"Injection into process {messageData.ProcessId} failed.");
-                }
-                break;
+            _logger.Log(logMessageData.Level, logMessageData.Message);
 
-            case nameof(LogMessage):
-                var logMessageData = (LogMessage)message;
-                _logger.LogInformation($"{logMessageData.Level}: {logMessageData.Message}");
-                break;
-
-            default:
-                throw new InvalidOperationException($"Message type {message.GetType().Name} is not supported");
+        }
+        else if (message is InjectionCompleteMessage messageData)
+        {
+            if (messageData.Completed)
+            {
+                InjectionCompleted(messageData.ProcessId);
+            }
+            else
+            {
+                throw new InjectionLoadException($"Injection into process {messageData.ProcessId} failed.");
+            }
+        }
+        else
+        {
+            throw new InvalidOperationException($"Message type {message.GetType().Name} is not supported");
         }
     }
 

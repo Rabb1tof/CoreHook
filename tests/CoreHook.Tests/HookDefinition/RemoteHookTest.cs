@@ -27,12 +27,12 @@ public class RemoteHookTest
     {
         const string testHookLibrary = "CoreHook.Tests.SimpleParameterTest.dll";
         const string remoteArgument = "Berner";
-
+        
         var testProcess = StartProcess(Path.Combine(Environment.ExpandEnvironmentVariables("%Windir%"), applicationFolder, "notepad.exe"));
 
         Thread.Sleep(500);
 
-        RemoteHook.InjectDllIntoTarget(testProcess, GetTestDllPath(testHookLibrary), logger, PipePlatformBase.Instance, false, remoteArgument);
+        RemoteHook.InjectDllIntoTarget(testProcess, GetTestDllPath(testHookLibrary), typeof(SimpleParameterTest.EntryPoint).FullName, logger, PipePlatformBase.Instance, false, remoteArgument);
 
         Assert.Equal(remoteArgument, ReadFromProcess(testProcess));
 
@@ -61,7 +61,7 @@ public class RemoteHookTest
 
         Thread.Sleep(500);
 
-        RemoteHook.InjectDllIntoTarget(testProcess, GetTestDllPath(testHookLibrary), logger, PipePlatformBase.Instance, false, complexParameter);
+        RemoteHook.InjectDllIntoTarget(testProcess, GetTestDllPath(testHookLibrary), typeof(SimpleParameterTest.EntryPoint).FullName, logger, PipePlatformBase.Instance, false, complexParameter);
 
         Assert.Equal(complexParameter.Message, ReadFromProcess(testProcess));
         Assert.Equal(complexParameter.HostProcessId.ToString(), ReadFromProcess(testProcess));

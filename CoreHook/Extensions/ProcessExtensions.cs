@@ -20,13 +20,13 @@ public static partial class ProcessExtensions
         return processList.Cast<ManagementObject>().Select(p => Process.GetProcessById(Convert.ToInt32(p.GetPropertyValue("ProcessId")))).ToList();
     }
 
-    public static bool AttachHook(this Process process, string injectionLibrary, ILoggerFactory loggerFactory, IPipePlatform pipeplatform, params object[] parameters)
+    public static bool AttachHook(this Process process, string injectionLibrary, string injectedType, ILoggerFactory loggerFactory, IPipePlatform pipeplatform, params object[] parameters)
     {
-        return RemoteHook.InjectDllIntoTarget(process, injectionLibrary, loggerFactory, pipeplatform, parameters);
+        return RemoteHook.InjectDllIntoTarget(process, injectionLibrary, injectedType, loggerFactory, pipeplatform, parameters);
     }
 
-    public static bool AttachHook(this Process process, string injectionLibrary, ILoggerFactory loggerFactory, params object[] parameters)
+    public static bool AttachHook(this Process process, string injectionLibrary, string injectedType, ILoggerFactory loggerFactory, params object[] parameters)
     {
-        return RemoteHook.InjectDllIntoTarget(process, injectionLibrary, loggerFactory, parameters: parameters);
+        return RemoteHook.InjectDllIntoTarget(process, injectionLibrary, injectedType, loggerFactory, parameters: parameters);
     }
 }

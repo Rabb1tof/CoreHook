@@ -64,7 +64,7 @@ public sealed partial class ManagedProcess : IDisposable
 
     public void InjectModule(string modulePath)
     {
-        CreateThread(Path.Combine(Environment.ExpandEnvironmentVariables("%Windir%"), "System32", "kernel32.dll"), "LoadLibraryW", ref modulePath);
+        CreateThread(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "kernel32.dll"), "LoadLibraryW", ref modulePath);
     }
 
     /// <summary>

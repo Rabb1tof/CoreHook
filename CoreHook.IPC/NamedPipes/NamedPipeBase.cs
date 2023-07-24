@@ -15,6 +15,10 @@ public abstract class NamedPipeBase : INamedPipe
 
     protected string _pipeName;
 
+    protected string _context;
+
+    public string PipeName => _pipeName;
+
     protected string _namedPipeId = Guid.NewGuid().ToString();
 
     public virtual PipeStream? Stream
@@ -37,7 +41,7 @@ public abstract class NamedPipeBase : INamedPipe
     {
         if (!Stream.IsConnected)
         {
-            throw new IOException("Pipe connection is closed. Unable to write.");
+            throw new IOException($"{_context}: pipe connection is closed. Unable to write.");
         }
 
         try
@@ -49,9 +53,10 @@ public abstract class NamedPipeBase : INamedPipe
 
             return true;
         }
-        catch (IOException)
+        catch (IOException exc)
         {
-            return false;
+            _logger.LogError(exc, "{context}: unable to write a {type} message to pipe.", _context, message.GetType().Name);
+            throw;
         }
     }
 
@@ -61,7 +66,7 @@ public abstract class NamedPipeBase : INamedPipe
     {
         if (!_pipeStream.IsConnected)
         {
-            throw new IOException("Pipe connection is closed. Unable to read.");
+            throw new IOException($"{_context}: pipe connection is closed. Unable to read.");
         }
 
         string? message = null;
@@ -72,14 +77,15 @@ public abstract class NamedPipeBase : INamedPipe
             {
                 return CustomMessage.Deserialize(message);
             }
+
+            return null;
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Unable to deserialize.\r\nBody: {message}", message);
-            Console.WriteLine();
+            _logger.LogError(e, "{context}: unable to deserialize.\r\nBody: {message}", _context, message);
+            throw;
         }
 
-        return null;
     }
 
     public abstract void Connect();

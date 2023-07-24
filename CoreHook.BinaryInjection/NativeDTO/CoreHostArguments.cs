@@ -6,7 +6,7 @@ namespace CoreHook.BinaryInjection.NativeDTO;
 /// Managed structure reflecting the core_host_arguments unmanaged one to pass arguments used when injecting the CLR host
 /// </summary>
 [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-public readonly struct NetHostStartArguments
+internal readonly struct CoreHostArguments
 {
     /// <summary>
     /// Library that resolves dependencies and passes arguments to
@@ -32,7 +32,7 @@ public readonly struct NetHostStartArguments
     /// <param name="clrRootPath">See <see cref="_clrRootPath"/></param>
     /// <param name="verboseLog">See <see cref="VerboseLog"/></param>
     /// <param name="injectionPipeName"></param>
-    public NetHostStartArguments(string clrBootstrapLibrary, string clrRootPath, string injectionPipeName)
+    internal CoreHostArguments(string clrBootstrapLibrary, string clrRootPath, string injectionPipeName)
     {
         _clrBootstrapLibrary = clrBootstrapLibrary;
         _clrRootPath = clrRootPath;

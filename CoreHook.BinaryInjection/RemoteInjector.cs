@@ -1,6 +1,7 @@
 ﻿using CoreHook.BinaryInjection.NativeDTO;
 using CoreHook.BinaryInjection.RemoteInjection;
 using CoreHook.IPC.Platform;
+using CoreHook.Loader;
 
 using Microsoft.Extensions.Logging;
 
@@ -11,11 +12,19 @@ namespace CoreHook.BinaryInjection;
 
 public class RemoteInjector : IDisposable
 {
+    private readonly ILogger _logger;
+    
     private readonly Process _targetProcess;
     private readonly ManagedProcess _managedProcess;
-    private readonly ILogger _logger;
-    private readonly InjectionHelper _injectionHelper;
+    
     private readonly string _injectionPipeName;
+    private readonly InjectionHelper _injectionHelper;
+
+    /// <summary>
+    /// The .NET Assembly class that loads the .NET plugin, resolves any references, and executes
+    /// the IEntryPoint.Run method for that plugin.
+    /// </summary>
+    private static readonly AssemblyDelegate DefaultDelegate = new("CoreHook.BinaryInjection", "CoreHook.Loader.PluginLoader", "Load", "CoreHook.Loader.PluginLoader+LoadDelegate, CoreHook");
 
     public RemoteInjector(Process targetProcess, IPipePlatform pipePlatform, string injectionPipeName, ILoggerFactory logFactory)
     {
@@ -24,7 +33,7 @@ public class RemoteInjector : IDisposable
             throw new ArgumentException("Invalid injection pipe name");
         }
 
-        _logger = logFactory.CreateLogger<RemoteInjector>();
+        _logger = logFactory.CreateLogger(nameof(RemoteInjector));
 
         _targetProcess = targetProcess;
         _managedProcess = new ManagedProcess(targetProcess);
@@ -79,7 +88,7 @@ public class RemoteInjector : IDisposable
             if (!waitForExit)
             {
                 _logger.LogInformation($"Waiting for the injection notification...");
-                _injectionHelper.WaitForInjection(_targetProcess.Id);
+                _injectionHelper.WaitForInjection(_targetProcess.Id, 100000);
             }
 
             _logger.LogInformation($"Injection done!");
@@ -97,7 +106,7 @@ public class RemoteInjector : IDisposable
         }
     }
 
-    public bool InjectManaged(string coreLoadPath, ManagedFunctionArguments managedFuncArgs)
+    public bool InjectManaged(string coreLoadPath, AssemblyDelegate? assemblyDelegate, ManagedRemoteInfo args)//ManagedFunctionArguments managedFuncArgs)
     {
         var is64Bits = _targetProcess.Is64Bit();
         _logger.LogInformation("Process #{targetProcessId} is {64or32}.", _targetProcess.Id, is64Bits ? "64bits" : "32bits");
@@ -111,19 +120,19 @@ public class RemoteInjector : IDisposable
             UwpSecurityHelper.GrantAllAppPackagesAccessToFile(paths.coreHostPath);
         }
 
-        var startCoreCLRArgs = new NetHostStartArguments(coreLoadPath, paths.coreRootPath, _injectionPipeName);
+        var startCoreCLRArgs = new CoreHostArguments(coreLoadPath, paths.coreRootPath, _injectionPipeName);
 
         if (InjectLibraries(paths.nethostLibPath) && InjectNative(paths.coreHostPath, "StartCoreCLR", startCoreCLRArgs, true))
         {
             _logger.LogInformation("Successfully started the .NET CLR in the target process.");
 
+            var managedFuncArgs = new AssemblyFunctionCall(assemblyDelegate ?? DefaultDelegate, _injectionPipeName, args);
             if (InjectNative(paths.coreHostPath, "ExecuteAssemblyFunction", managedFuncArgs, false))
             {
                 _logger.LogInformation("Successfully executed target .NET method.");
                 return true;
             }
         }
-
 
         return false;
     }
@@ -135,6 +144,8 @@ public class RemoteInjector : IDisposable
 
     public void Dispose()
     {
+        _logger.LogInformation("Disposing...");
+
         _managedProcess.Dispose();
         _injectionHelper.Dispose();
     }

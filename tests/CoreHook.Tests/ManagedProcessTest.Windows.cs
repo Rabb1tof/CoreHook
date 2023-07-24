@@ -11,7 +11,7 @@ public partial class ManagedProcessTest
     [Fact]
     public void ShouldGetFunctionAddressForCurrentProcess()
     {
-        string moduleFileName = Path.Combine(Environment.ExpandEnvironmentVariables("%Windir%"), "System32", "kernel32.dll");
+        string moduleFileName = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "kernel32.dll");
         const string functionName = "LoadLibraryW";
 
         using var process = new ManagedProcess(Process.GetCurrentProcess());

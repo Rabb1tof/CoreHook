@@ -22,4 +22,6 @@ public interface INamedPipe : IDisposable
     Task<CustomMessage?> Read();
 
     Task<bool> TryWrite(CustomMessage message);
+
+    string PipeName { get; }
 }

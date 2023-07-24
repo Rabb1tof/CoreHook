@@ -1,10 +1,8 @@
 ﻿using System;
 
-using CoreHook.EntryPoint;
-
 namespace CoreHook.Tests.ComplexParameterTest;
 
-public class EntryPoint : IEntryPoint
+public class EntryPoint
 {
     public EntryPoint(ComplexParameter _) { }
 

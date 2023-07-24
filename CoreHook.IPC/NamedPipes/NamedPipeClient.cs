@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+
+using System;
 using System.IO;
 using System.IO.Pipes;
 using System.Security.Principal;
@@ -10,9 +12,11 @@ namespace CoreHook.IPC.NamedPipes;
 /// </summary>
 public class NamedPipeClient : NamedPipeBase
 {
-    public NamedPipeClient(string pipeName, bool connect = true) 
+public NamedPipeClient(string pipeName, ILogger logger, bool connect = true) 
     {
+        _context = $"{pipeName} (client)";
         _pipeName = pipeName;
+        _logger = logger;
 
         if (connect)
         {
@@ -25,7 +29,7 @@ public class NamedPipeClient : NamedPipeBase
     {
         if (Stream is not null)
         {
-            throw new IOException("Client pipe already connected");
+            throw new IOException($"{_context}: client pipe already connected");
         }
 
         ArgumentNullException.ThrowIfNull(_pipeName);

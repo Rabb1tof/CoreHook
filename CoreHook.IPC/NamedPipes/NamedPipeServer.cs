@@ -31,6 +31,7 @@ public class NamedPipeServer : NamedPipeBase
     /// <returns>An instance of the new pipe server.</returns>
     public NamedPipeServer(string pipeName, IPipePlatform platform, Action<INamedPipe, CustomMessage> handleMessage, ILogger logger)
     {
+        _context = $"{pipeName} (server)"; 
         _handleMessage = handleMessage;
         _pipeName = pipeName;
         _platform = platform;
@@ -43,30 +44,24 @@ public class NamedPipeServer : NamedPipeBase
     {
         var pipeStream = (NamedPipeServerStream)Stream!;
 
-        while (!_connectionStopped)
+        while (!_connectionStopped & pipeStream is not null)
         {
             try
             {
-                _logger.LogInformation("{pipeName}: waiting for connection...", _pipeName);
+                _logger.LogInformation("{context}: waiting for connection...", _context);
 
                 await pipeStream.WaitForConnectionAsync();
 
-                _logger.LogInformation("{pipeName}: new client connected.", _pipeName);
+                _logger.LogInformation("{context}: new client connected.", _context);
 
                 while (pipeStream.IsConnected)
                 {
                     var message = await Read();
 
-                    if (message is null)
-                    {
-                        _logger.LogError("A null message has been received. Ignoring.");
-                        continue;
-                    }
-
                     // Only process the message if it has not been sent by the current thread, as both the client and server can write/read messages.
-                    if (message.SenderId != _namedPipeId)
+                    if (message is not null && message.SenderId != _namedPipeId)
                     {
-                        _logger.LogDebug("Message {id} will be handled by {pipeId}", message.MessageId, this._namedPipeId);
+                        _logger.LogDebug("{context}: message {id} will be handled by {pipeId}", _context, message.MessageId, this._namedPipeId);
                         _handleMessage?.Invoke(this, message);
                     }
                 }
@@ -76,7 +71,7 @@ public class NamedPipeServer : NamedPipeBase
                 // If the connection is stopped (i.e. we don't need to listen anymore - and don't care about it), just skip
                 if (!_connectionStopped)
                 {
-                    _logger.LogInformation("Current client was disconnected from {pipeName}.", _pipeName);
+                    _logger.LogInformation("{context}: current client was disconnected.", _context);
                     // Disconnecting "cleanly" as the pipe was broken without proper disconnection
                     pipeStream.Disconnect();
                 }
@@ -89,7 +84,7 @@ public class NamedPipeServer : NamedPipeBase
     {
         if (Stream is not null)
         {
-            throw new InvalidOperationException("Pipe server already started");
+            throw new InvalidOperationException($"{_pipeName} (server): Pipe server already started");
         }
 
         Stream = _platform.CreatePipeByName(_pipeName);
@@ -100,7 +95,7 @@ public class NamedPipeServer : NamedPipeBase
     /// <inheritdoc />
     public new void Dispose()
     {
-        _logger.LogInformation("{pipeName}: Disposing.", _pipeName);
+        _logger.LogInformation("{pipeName} (server): Disposing.", _pipeName);
 
         _connectionStopped = true;
 

@@ -1,10 +1,8 @@
-﻿using CoreHook.EntryPoint;
-
-using System;
+﻿using System;
 
 namespace CoreHook.Tests.SimpleParameterTest;
 
-public class EntryPoint : IEntryPoint
+public class EntryPoint
 {
     public EntryPoint(string _) { }
 

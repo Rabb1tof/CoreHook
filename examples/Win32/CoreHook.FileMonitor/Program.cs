@@ -2,6 +2,7 @@
 using CoreHook.Extensions;
 using CoreHook.FileMonitor.Hook;
 using CoreHook.FileMonitor.Uwp;
+using CoreHook.HookDefinition;
 using CoreHook.IPC.Messages;
 using CoreHook.IPC.NamedPipes;
 using CoreHook.IPC.Platform;
@@ -15,6 +16,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 
@@ -24,7 +26,7 @@ namespace CoreHook.FileMonitor;
 
 class Program
 {
-    private static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+    private static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddSimpleConsole(conf => conf.SingleLine = true));
     private static readonly ILogger logger = loggerFactory.CreateLogger<Program>();
 
     /// <summary>
@@ -39,9 +41,26 @@ class Program
     /// </summary>
     private const string PIPE_NAME_BASE = "FileMonitorHookPipe_";
 
+    //public IntPtr CreateFile_Hooked(string fileName, uint desiredAccess, uint shareMode, IntPtr securityAttributes, uint creationDisposition, uint flagsAndAttributes, IntPtr templateFile)
+    //{
+    //    return IntPtr.Zero;
+    //}
+
+
+
+    //private Delegate CreateDelegate(MethodInfo hookMethod)
+    //{
+    //    var parameters = hookMethod.GetParameters().Select(parameter => Expression.Parameter(parameter.ParameterType, parameter.Name)).ToArray();//.Append(hookMethod.ReturnType).ToArray();
+    //    var call = Expression.Call(Expression.Constant(this), hookMethod, parameters);
+    //    var deleg = Expression.Lambda(call, parameters).Compile();
+
+    //    return deleg;
+    //}
 
     private static void Main(string[] args)
     {
+        //LocalHook.Create("kernel32.dll", "CreateFileW", new Program().CreateDelegate(typeof(Program).GetMethod("CreateFile_Hooked", BindingFlags.Static | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)), new EntryPoint(""));
+
         Process? process = null;
         string targetProgram = string.Empty;
 
@@ -128,13 +147,14 @@ class Program
             // Start the RPC server for handling requests from the hooked program.
             // TODO: should we dispose that one?
             var server = new NamedPipeServer(pipeName, isUwp ? new UwpPipePlatform() : DefaultPipePlatform.Instance, HandleRequest, logger);
-            
+
             logger.LogInformation("Now listening on {pipeName}.", pipeName);
 
             string injectionLibrary = Path.Combine(currentDir, isUwp ? HOOK_LIB_NAME_UWP : HOOK_LIB_NAME);
+            string injectedType = isUwp ? typeof(CoreHook.Uwp.FileMonitor.Hook.EntryPoint).FullName! : typeof(CoreHook.FileMonitor.Hook.EntryPoint).FullName!;
 
             // Inject FileMonitor dll into process using default pipe platform
-            if (!target.AttachHook(injectionLibrary, loggerFactory, isUwp ? new UwpPipePlatform() : DefaultPipePlatform.Instance, pipeName))
+            if (!target.AttachHook(injectionLibrary, injectedType, loggerFactory, isUwp ? new UwpPipePlatform() : DefaultPipePlatform.Instance, pipeName))
             {
                 logger.LogInformation("Unable to inject into {processName} ({processId}).", target.ProcessName, target.Id);
                 return;

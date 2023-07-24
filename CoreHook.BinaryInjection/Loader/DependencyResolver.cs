@@ -3,12 +3,10 @@ using Microsoft.Extensions.DependencyModel.Resolution;
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
-using System.Threading;
 
 namespace CoreHook.Loader;
 
@@ -70,12 +68,10 @@ internal sealed class DependencyResolver
             return matched;
         }
 
-        Log($"OnResolving: {name}");
-
         try
         {
             RuntimeLibrary library = _dependencyContext.RuntimeLibraries.FirstOrDefault(NamesMatchOrContain);
-
+            
             if (library is not null)
             {
                 var wrapper = new CompilationLibrary(
@@ -97,13 +93,13 @@ internal sealed class DependencyResolver
                 }
                 else
                 {
-                    Log("Failed to resolve assembly");
+                    Log($"Failed to resolve assembly {name.Name}");
                 }
             }
         }
         catch (Exception e)
         {
-            Log($"OnResolving error: {e}");
+            Log($"An error occured while resolving assembly {name.Name}: {e}");
         }
         return null;
     }
@@ -116,6 +112,5 @@ internal sealed class DependencyResolver
     private void Log(string message)
     {
         _ = _hostNotifier.Log(message);
-        Debug.WriteLine(message);
     }
 }
