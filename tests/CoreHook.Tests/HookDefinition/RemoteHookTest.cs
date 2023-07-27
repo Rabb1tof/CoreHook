@@ -3,8 +3,6 @@ using CoreHook.Tests.ComplexParameterTest;
 
 using Microsoft.Extensions.Logging;
 
-using Moq;
-
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -18,7 +16,7 @@ namespace CoreHook.Tests.HookDefinition;
 [Collection("Remote Injection Tests")]
 public class RemoteHookTest
 {
-    private ILoggerFactory logger = Mock.Of<ILoggerFactory>();
+    private ILoggerFactory logger = LoggerFactory.Create(config => config.AddSimpleConsole());
 
     [Theory]
     [InlineData("System32")]
@@ -27,12 +25,12 @@ public class RemoteHookTest
     {
         const string testHookLibrary = "CoreHook.Tests.SimpleParameterTest.dll";
         const string remoteArgument = "Berner";
-        
-        var testProcess = StartProcess(Path.Combine(Environment.ExpandEnvironmentVariables("%Windir%"), applicationFolder, "notepad.exe"));
+
+        var testProcess = StartProcess(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), applicationFolder, "notepad.exe"));
 
         Thread.Sleep(500);
 
-        RemoteHook.InjectDllIntoTarget(testProcess, GetTestDllPath(testHookLibrary), typeof(SimpleParameterTest.EntryPoint).FullName, logger, PipePlatformBase.Instance, false, remoteArgument);
+        Assert.True(RemoteHook.InjectDllIntoTarget(testProcess, GetTestDllPath(testHookLibrary), typeof(SimpleParameterTest.EntryPoint).FullName, logger, PipePlatformBase.Instance, remoteArgument));
 
         Assert.Equal(remoteArgument, ReadFromProcess(testProcess));
 
@@ -57,11 +55,11 @@ public class RemoteHookTest
             HostProcessId = Environment.ProcessId
         };
 
-        var testProcess = StartProcess(Path.Combine(Environment.ExpandEnvironmentVariables("%Windir%"), applicationFolder, "notepad.exe"));
+        var testProcess = StartProcess(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), applicationFolder, "notepad.exe"));
 
         Thread.Sleep(500);
 
-        RemoteHook.InjectDllIntoTarget(testProcess, GetTestDllPath(testHookLibrary), typeof(SimpleParameterTest.EntryPoint).FullName, logger, PipePlatformBase.Instance, false, complexParameter);
+        Assert.True(RemoteHook.InjectDllIntoTarget(testProcess, GetTestDllPath(testHookLibrary), typeof(ComplexParameterTest.EntryPoint).FullName, logger, PipePlatformBase.Instance, complexParameter));
 
         Assert.Equal(complexParameter.Message, ReadFromProcess(testProcess));
         Assert.Equal(complexParameter.HostProcessId.ToString(), ReadFromProcess(testProcess));
@@ -94,7 +92,7 @@ public class RemoteHookTest
 
     private static void EndProcess(Process process)
     {
-        process?.Kill();
+        process?.Kill(true);
     }
 
     private static string ReadFromProcess(Process target)

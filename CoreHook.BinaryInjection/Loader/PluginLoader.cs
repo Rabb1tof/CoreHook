@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using CoreHook.BinaryInjection.NativeDTO;
+using Microsoft.Extensions.Logging;
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-
+using System.Runtime.Loader;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -14,6 +16,8 @@ public class PluginLoader
 {
     private static readonly ILoggerFactory _loggerFactory = LoggerFactory.Create(builder => builder.AddDebug());
     private static readonly ILogger _logger = _loggerFactory.CreateLogger<PluginLoader>();
+    
+    public static AssemblyDelegate DefaultDelegate { get; } = new(typeof(PluginLoader).GetMethod(nameof(Load))!);
 
     /// <summary>
     /// Initialize the plugin dependencies and execute its entry point.
@@ -21,7 +25,7 @@ public class PluginLoader
     /// <param name="remoteInfoAddr">Parameters containing the plugin to load and the parameters to pass to it's entry point.</param>
     /// <returns>A status code representing the plugin initialization state.</returns>
     [UnmanagedCallersOnly]//(CallConvs = new[] { typeof(CallConvCdecl) })]
-    public unsafe static int Load(IntPtr payLoadPtr)
+    public static int Load(IntPtr payLoadPtr)
     {
         NotificationHelper? hostNotifier = null;
         try
@@ -40,12 +44,12 @@ public class PluginLoader
             // Start the IPC message notifier with a connection to the host application.
             hostNotifier = new NotificationHelper(payLoad.ChannelName, _logger);
 
-            _ = hostNotifier.Log($"Initializing plugin: {payLoad.UserLibrary}.");
+            _ = hostNotifier.Log($"Loading plugin: {payLoad.UserLibrary}.");
 
-            var resolver = new DependencyResolver(payLoad.UserLibrary, hostNotifier);
+            _ = hostNotifier.Log("Resolving dependencies...");
 
             // Execute the plugin library's entry point and pass in the user arguments.
-            var loadPluginTask = LoadPlugin(resolver.Assembly, payLoad.UserParams, payLoad.ClassName, payLoad.MethodName, hostNotifier);
+            var loadPluginTask = LoadPlugin(payLoad, hostNotifier);
             loadPluginTask.Wait();
 
             return (int)loadPluginTask.Result;
@@ -57,7 +61,7 @@ public class PluginLoader
         //}
         catch (Exception e)
         {
-            Log(hostNotifier, e.ToString());
+            _ = hostNotifier?.Log($"Unable to load plugin: {e.Message}", LogLevel.Error);
         }
         finally
         {
@@ -73,27 +77,35 @@ public class PluginLoader
     /// <param name="assembly">The plugin assembly containing the entry point.</param>
     /// <param name="paramArray">The parameters passed to the plugin Run method.</param>
     /// <param name="hostNotifier">Used to notify the host about the state of the plugin initialization.</param>
-    private static async Task<PluginInitializationState> LoadPlugin(Assembly assembly, object[] paramArray, string className, string methodName, NotificationHelper hostNotifier)
+    private static async Task<PluginInitializationState> LoadPlugin(ManagedRemoteInfo payLoad, NotificationHelper hostNotifier)
     {
-        //var entryPoint = FindEntryPoint(assembly);
-        var entryPoint = assembly.GetType(className, false, false);
-        if (entryPoint is null)
+        var assembly = LoadAssembly(payLoad.UserLibrary, hostNotifier);
+        if (assembly is null)
         {
-            LogAndThrow(hostNotifier, new ArgumentException($"Assembly {assembly.FullName} doesn't contain the {className} type."));
+            _ = hostNotifier?.Log($"Unable to load assembly from {payLoad.UserLibrary}.", LogLevel.Error);
+            return PluginInitializationState.Failed;
         }
 
-        var runMethod = entryPoint.GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
+        var entryPoint = assembly.GetType(payLoad.ClassName, false, false);
+        if (entryPoint is null)
+        {
+            _ = hostNotifier?.Log($"Assembly {assembly.FullName} doesn't contain the {payLoad.ClassName} type.", LogLevel.Error);
+            return PluginInitializationState.Failed;
+        }
+
+        var runMethod = entryPoint.GetMethod(payLoad.MethodName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
         if (runMethod is null)
         {
-            LogAndThrow(hostNotifier, new MissingMethodException($"Failed to find the 'Run' function with {paramArray.Length} parameter(s) in {assembly.FullName}."));
+            _ = hostNotifier?.Log($"Failed to find the 'Run' function with {payLoad.UserParams.Length} parameter(s) in {assembly.FullName}.", LogLevel.Error);
+            return PluginInitializationState.Failed;
         }
 
         _ = hostNotifier.Log("Found entry point, initializing plugin class.");
-
-        var instance = Activator.CreateInstance(entryPoint, paramArray);
+        var instance = Activator.CreateInstance(entryPoint, payLoad.UserParams);
         if (instance is null)
         {
-            LogAndThrow(hostNotifier, new MissingMethodException($"Failed to find the constructor {entryPoint.Name} in {assembly.FullName}"));
+            _ = hostNotifier?.Log($"Failed to find the constructor {entryPoint.Name} in {assembly.FullName}", LogLevel.Error);
+            return PluginInitializationState.Failed;
         }
 
         _ = hostNotifier.Log("Plugin successfully initialized. Executing the plugin entry point.");
@@ -103,33 +115,42 @@ public class PluginLoader
             try
             {
                 // Execute the plugin 'Run' entry point.
-                runMethod?.Invoke(instance, BindingFlags.Public | BindingFlags.Instance | BindingFlags.ExactBinding | BindingFlags.InvokeMethod, null, paramArray, null);
+                runMethod?.Invoke(instance, BindingFlags.Public | BindingFlags.Instance | BindingFlags.ExactBinding | BindingFlags.InvokeMethod, null, payLoad.UserParams, null);
             }
-            catch
+            catch (Exception e)
             {
+                _ = hostNotifier.Log($"Entry point execution failed: {e.Message}", LogLevel.Error);
             }
             return PluginInitializationState.Initialized;
         }
+
         return PluginInitializationState.Failed;
     }
 
-    /// <summary>
-    /// Log a message.
-    /// </summary>
-    /// <param name="message">The information to log.</param>
-    private static void Log(NotificationHelper? notifier, string message)
+    private static Assembly? LoadAssembly(string path, NotificationHelper hostNotifier)
     {
-        _ = notifier?.Log(message, LogLevel.Error);
-    }
+        try
+        {
+            _ = hostNotifier.Log($"Image base path is {Path.GetDirectoryName(path)}");
 
-    /// <summary>
-    /// Send a exception message to the host and then throw the exception in the current application.
-    /// </summary>
-    /// <param name="notifier">Communication helper to send messages to the host application.</param>
-    /// <param name="e">The exception that occurred.</param>
-    private static void LogAndThrow(NotificationHelper? notifier, Exception e)
-    {
-        Log(notifier, e.Message);
-        throw e;
+            var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
+
+            var _assemblyResolver = new AssemblyDependencyResolver(path);
+            
+            var _loadContext = AssemblyLoadContext.GetLoadContext(assembly);
+            _loadContext.Resolving += (context, assemblyName) =>
+            {
+                var path = _assemblyResolver.ResolveAssemblyToPath(assemblyName);
+                return path is not null ? _loadContext.LoadFromAssemblyPath(path) : null;
+            };
+
+            return assembly;
+        }
+        catch (Exception e)
+        {
+            _ = hostNotifier.Log($"AssemblyResolver error: {e}");
+        }
+
+        return null;
     }
 }

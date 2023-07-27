@@ -11,7 +11,7 @@ namespace CoreHook.BinaryInjection.Tests;
 public class InjectionHelperTest
 {
     private readonly int _targetProcessId = Environment.ProcessId;
-    private readonly ILogger logger = Mock.Of<ILogger>();
+    private static readonly ILogger logger = Mock.Of<ILogger>();
 
     [Fact]
     public async void InjectionHelperCompleted()
@@ -58,7 +58,7 @@ public class InjectionHelperTest
 
     private static async Task<bool> SendInjectionComplete(string pipeName, int pid)
     {
-        using var pipeClient = new NamedPipeClient(pipeName, true);
+        using var pipeClient = new NamedPipeClient(pipeName, logger, true);
 
         try
         {

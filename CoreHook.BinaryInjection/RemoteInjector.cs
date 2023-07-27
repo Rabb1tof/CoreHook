@@ -20,12 +20,6 @@ public class RemoteInjector : IDisposable
     private readonly string _injectionPipeName;
     private readonly InjectionHelper _injectionHelper;
 
-    /// <summary>
-    /// The .NET Assembly class that loads the .NET plugin, resolves any references, and executes
-    /// the IEntryPoint.Run method for that plugin.
-    /// </summary>
-    private static readonly AssemblyDelegate DefaultDelegate = new("CoreHook.BinaryInjection", "CoreHook.Loader.PluginLoader", "Load", "CoreHook.Loader.PluginLoader+LoadDelegate, CoreHook");
-
     public RemoteInjector(Process targetProcess, IPipePlatform pipePlatform, string injectionPipeName, ILoggerFactory logFactory)
     {
         if (string.IsNullOrWhiteSpace(injectionPipeName))
@@ -126,7 +120,7 @@ public class RemoteInjector : IDisposable
         {
             _logger.LogInformation("Successfully started the .NET CLR in the target process.");
 
-            var managedFuncArgs = new AssemblyFunctionCall(assemblyDelegate ?? DefaultDelegate, _injectionPipeName, args);
+            var managedFuncArgs = new AssemblyFunctionCall(assemblyDelegate ?? PluginLoader.DefaultDelegate, _injectionPipeName, args);
             if (InjectNative(paths.coreHostPath, "ExecuteAssemblyFunction", managedFuncArgs, false))
             {
                 _logger.LogInformation("Successfully executed target .NET method.");

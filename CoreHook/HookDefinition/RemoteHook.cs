@@ -72,7 +72,7 @@ public static class RemoteHook
         using var injector = new RemoteInjector(targetProcess, pipePlatform ?? IPipePlatform.Default, injectionPipeName, loggerFactory);
         injector.InjectLibraries(corehookPath);
 
-        var args = new ManagedRemoteInfo(Environment.ProcessId, injectionPipeName, Path.GetFullPath(hookLibrary), hookType, "Run", parameters);
+        var args = new ManagedRemoteInfo(Environment.ProcessId, injectionPipeName, Path.GetFullPath(hookLibrary), hookType, nameof(HookBase.Run), parameters);
         return injector.InjectManaged(coreLoadPath, null, args);
     }
 }

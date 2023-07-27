@@ -18,6 +18,14 @@ public readonly struct AssemblyDelegate
     [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
     private readonly string? _delegateTypeName;
 
+    public AssemblyDelegate(MethodInfo meth)
+    {
+        var assembly = meth.DeclaringType.Assembly;
+        _assemblyPath = assembly.Location;
+        _typeNameQualified = meth.DeclaringType.AssemblyQualifiedName;
+        _methodName = meth.Name;
+    }
+
     public AssemblyDelegate(string assemblyName, string typeName, string methodName) : this()
     {
         var assembly = Assembly.Load(assemblyName);

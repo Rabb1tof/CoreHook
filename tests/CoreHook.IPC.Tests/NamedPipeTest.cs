@@ -13,7 +13,7 @@ public class NamedPipeTest
 
 
     [Fact]
-    private async void ShouldConnectToServer()
+    private async Task ShouldConnectToServer()
     {
         string namedPipe = PipePlatformBase.GetUniquePipeName();
         var request = new StringMessage("Ping");
@@ -26,14 +26,14 @@ public class NamedPipeTest
         }
 
         using var server = new NamedPipeServer(namedPipe, PipePlatformBase.Instance, func, logger);
-        using var pipeClient = new NamedPipeClient(namedPipe, true);
+        using var pipeClient = new NamedPipeClient(namedPipe, logger, true);
 
         Assert.True(await pipeClient.TryWrite(request));
         Assert.Equal(response.Message, await GetMessage(pipeClient));
     }
 
     [Fact]
-    private async void ShouldConnectToServerAndReceiveMultipleResponses()
+    private async Task ShouldConnectToServerAndReceiveMultipleResponses()
     {
         string namedPipe = PipePlatformBase.GetUniquePipeName();
 
@@ -44,7 +44,7 @@ public class NamedPipeTest
         async void func(INamedPipe pipe, CustomMessage message) => await pipe.TryWrite(message);
 
         using var server = new NamedPipeServer(namedPipe, PipePlatformBase.Instance, func, logger);
-        using var pipeClient = new NamedPipeClient(namedPipe, true);
+        using var pipeClient = new NamedPipeClient(namedPipe, logger, true);
 
         Assert.True(await pipeClient.TryWrite(testMessage1));
         Assert.True(await pipeClient.TryWrite(testMessage2));
