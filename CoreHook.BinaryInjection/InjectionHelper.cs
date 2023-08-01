@@ -36,8 +36,7 @@ public class InjectionHelper : IDisposable
     {
         if (message is LogMessage logMessageData)
         {
-            _logger.Log(logMessageData.Level, logMessageData.Message);
-
+            _logger.Log(logMessageData.Level, "[{source}] {message}", logMessageData.Source ?? "-", logMessageData.Message);
         }
         else if (message is InjectionCompleteMessage messageData)
         {

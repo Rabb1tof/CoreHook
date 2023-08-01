@@ -1,4 +1,5 @@
 ﻿using CoreHook.BinaryInjection.NativeDTO;
+
 using Microsoft.Extensions.Logging;
 
 using System;
@@ -16,7 +17,7 @@ public class PluginLoader
 {
     private static readonly ILoggerFactory _loggerFactory = LoggerFactory.Create(builder => builder.AddDebug());
     private static readonly ILogger _logger = _loggerFactory.CreateLogger<PluginLoader>();
-    
+
     public static AssemblyDelegate DefaultDelegate { get; } = new(typeof(PluginLoader).GetMethod(nameof(Load))!);
 
     /// <summary>
@@ -39,14 +40,8 @@ public class PluginLoader
 
             var payLoad = JsonSerializer.Deserialize<ManagedRemoteInfo>(payLoadStr, new JsonSerializerOptions() { IncludeFields = true });
 
-            payLoad.UserParams = payLoad.UserParams?.Zip(payLoad.UserParamsTypeNames!, (param, typeName) => param is null ? null : ((JsonElement)param).Deserialize(Type.GetType(typeName, true))).ToArray() ?? Array.Empty<object>();
-
             // Start the IPC message notifier with a connection to the host application.
             hostNotifier = new NotificationHelper(payLoad.ChannelName, _logger);
-
-            _ = hostNotifier.Log($"Loading plugin: {payLoad.UserLibrary}.");
-
-            _ = hostNotifier.Log("Resolving dependencies...");
 
             // Execute the plugin library's entry point and pass in the user arguments.
             var loadPluginTask = LoadPlugin(payLoad, hostNotifier);
@@ -79,50 +74,60 @@ public class PluginLoader
     /// <param name="hostNotifier">Used to notify the host about the state of the plugin initialization.</param>
     private static async Task<PluginInitializationState> LoadPlugin(ManagedRemoteInfo payLoad, NotificationHelper hostNotifier)
     {
+        await hostNotifier.Log($"Loading plugin: {payLoad.UserLibrary}.");
+
         var assembly = LoadAssembly(payLoad.UserLibrary, hostNotifier);
         if (assembly is null)
         {
-            _ = hostNotifier?.Log($"Unable to load assembly from {payLoad.UserLibrary}.", LogLevel.Error);
+            await hostNotifier?.Log($"Unable to load assembly from {payLoad.UserLibrary}.", LogLevel.Error);
             return PluginInitializationState.Failed;
         }
 
         var entryPoint = assembly.GetType(payLoad.ClassName, false, false);
         if (entryPoint is null)
         {
-            _ = hostNotifier?.Log($"Assembly {assembly.FullName} doesn't contain the {payLoad.ClassName} type.", LogLevel.Error);
+            await hostNotifier?.Log($"Assembly {assembly.FullName} doesn't contain the {payLoad.ClassName} type.", LogLevel.Error);
             return PluginInitializationState.Failed;
         }
 
         var runMethod = entryPoint.GetMethod(payLoad.MethodName, BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy);
         if (runMethod is null)
         {
-            _ = hostNotifier?.Log($"Failed to find the 'Run' function with {payLoad.UserParams.Length} parameter(s) in {assembly.FullName}.", LogLevel.Error);
+            await hostNotifier?.Log($"Failed to find the 'Run' function with {payLoad.UserParams.Length} parameter(s) in {assembly.FullName}.", LogLevel.Error);
             return PluginInitializationState.Failed;
         }
 
-        _ = hostNotifier.Log("Found entry point, initializing plugin class.");
-        var instance = Activator.CreateInstance(entryPoint, payLoad.UserParams);
+        await hostNotifier.Log("Found entry point, initializing plugin class.");
+        // Using Activator.CreateInstance can result in a MissingMethodException because of a type mismatch, hence taking the first constructor since we expect one anyway.
+        //var instance = Activator.CreateInstance(entryPoint, arguments);
+        var ctor = entryPoint.GetConstructors().SingleOrDefault();
+        var arguments = ctor.GetParameters().Zip(payLoad.UserParams, (paramInfo, paramValue) => ((JsonElement)paramValue).Deserialize(paramInfo.ParameterType)).ToArray();
+        var instance = ctor.Invoke(arguments);
         if (instance is null)
         {
-            _ = hostNotifier?.Log($"Failed to find the constructor {entryPoint.Name} in {assembly.FullName}", LogLevel.Error);
+            await hostNotifier?.Log($"Failed to find the constructor {entryPoint.Name} in {assembly.FullName}. Only one constructor is expected.", LogLevel.Error);
             return PluginInitializationState.Failed;
         }
 
-        _ = hostNotifier.Log("Plugin successfully initialized. Executing the plugin entry point.");
+        await hostNotifier.Log("Plugin successfully initialized. Executing the plugin entrypoint.");
 
         if (await hostNotifier.SendInjectionComplete(Environment.ProcessId))
         {
             try
             {
                 // Execute the plugin 'Run' entry point.
-                runMethod?.Invoke(instance, BindingFlags.Public | BindingFlags.Instance | BindingFlags.ExactBinding | BindingFlags.InvokeMethod, null, payLoad.UserParams, null);
+                runMethod?.Invoke(instance, arguments);
+                await hostNotifier.Log("Plugin initialized!");
+
+                return PluginInitializationState.Initialized;
             }
             catch (Exception e)
             {
-                _ = hostNotifier.Log($"Entry point execution failed: {e.Message}", LogLevel.Error);
+                await hostNotifier.Log($"Entry point execution failed: {e.Message}", LogLevel.Error);
             }
-            return PluginInitializationState.Initialized;
         }
+
+        await hostNotifier.Log("Unable to load the plugin!");
 
         return PluginInitializationState.Failed;
     }
@@ -136,8 +141,8 @@ public class PluginLoader
             var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
 
             var _assemblyResolver = new AssemblyDependencyResolver(path);
-            
-            var _loadContext = AssemblyLoadContext.GetLoadContext(assembly);
+
+            var _loadContext = AssemblyLoadContext.GetLoadContext(assembly)!;
             _loadContext.Resolving += (context, assemblyName) =>
             {
                 var path = _assemblyResolver.ResolveAssemblyToPath(assemblyName);

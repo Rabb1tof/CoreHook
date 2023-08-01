@@ -224,7 +224,7 @@ SHARED_API int StartCoreCLR(const core_host_arguments* arguments)
 
 void WriteToPipe(const HANDLE pipeHandle, const int loglevel, const std::string msg)
 {
-	const std::string message = std::format("{{ \"$type\": \"CoreHook.IPC.Messages.LogMessage\", \"Level\": {}, \"Message\": \"{}\" }}\r\n", loglevel, msg);
+	const std::string message = std::format("{{ \"$type\": \"CoreHook.IPC.Messages.LogMessage\", \"Level\": {}, \"Source\": \"NativeHost\", \"Message\": \"{}\" }}\r\n", loglevel, msg);
 
 	WriteFile(pipeHandle, message.c_str(), message.size(), nullptr, nullptr);
 	FlushFileBuffers(pipeHandle);
@@ -262,8 +262,8 @@ SHARED_API int ExecuteAssemblyFunction(const assembly_function_call* arguments)
 	//	::Sleep(100); // to avoid 100% CPU load
 
 	//DebugBreak();
-
-	HANDLE pipeHandle = CreateFile((STR("\\\\.\\pipe\\") + std::wstring(arguments->pipename)).c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_WRITE_THROUGH, NULL);
+	std::wstring pipename = arguments->pipename;
+	HANDLE pipeHandle = CreateFile((STR("\\\\.\\pipe\\") + pipename).c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_WRITE_THROUGH, NULL);
 
 	const std::wstring method = arguments->method_name;
 	WriteToPipe(pipeHandle, LOG_LEVEL_INFO, std::format("Creating assembly function delegate for {}", "xxx"));
@@ -277,7 +277,7 @@ SHARED_API int ExecuteAssemblyFunction(const assembly_function_call* arguments)
 		CloseHandle(pipeHandle);
 		exit_code = execute_delegate(BSTR(arguments->payload));
 
-		pipeHandle = CreateFile((STR("\\\\.\\pipe\\") + std::wstring(arguments->pipename)).c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_WRITE_THROUGH, NULL);
+		pipeHandle = CreateFile((STR("\\\\.\\pipe\\") + pipename).c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_FLAG_NO_BUFFERING | FILE_FLAG_WRITE_THROUGH, NULL);
 		WriteToPipe(pipeHandle, LOG_LEVEL_INFO, std::format("Returned {}", exit_code));
 		CloseHandle(pipeHandle);
 	}

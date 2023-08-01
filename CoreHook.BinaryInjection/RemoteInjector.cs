@@ -82,7 +82,7 @@ public class RemoteInjector : IDisposable
             if (!waitForExit)
             {
                 _logger.LogInformation($"Waiting for the injection notification...");
-                _injectionHelper.WaitForInjection(_targetProcess.Id, 100000);
+                _injectionHelper.WaitForInjection(_targetProcess.Id);
             }
 
             _logger.LogInformation($"Injection done!");

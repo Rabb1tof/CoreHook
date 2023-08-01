@@ -53,8 +53,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Label="Defaults">
-    <OutDir>bin\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <IntDir>obj\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <OutDir>bin\$(Configuration)\$(PlatformTarget)\</OutDir>
+    <IntDir>obj\$(Configuration)\$(PlatformTarget)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>

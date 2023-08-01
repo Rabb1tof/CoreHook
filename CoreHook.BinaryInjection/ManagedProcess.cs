@@ -90,7 +90,6 @@ public sealed partial class ManagedProcess : IDisposable
 
             if (waitForThreadExit)
             {
-                //TODO: check timeout infinite
                 NativeMethods.WaitForSingleObject(remoteThread, uint.MaxValue);
             }
 
@@ -99,7 +98,7 @@ public sealed partial class ManagedProcess : IDisposable
         finally
         {
             remoteThread?.Dispose();
-            if (waitForThreadExit)
+            if (waitForThreadExit && argumentsAllocation is not null)
             {
                 _memoryManager.Deallocate(argumentsAllocation);
             }

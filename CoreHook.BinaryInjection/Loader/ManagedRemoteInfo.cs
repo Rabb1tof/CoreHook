@@ -13,26 +13,23 @@ public struct ManagedRemoteInfo
 
     public string UserLibrary;
 
-    public string UserLibraryName;
+    public string ClassName;
+
+    public string MethodName;
 
     public object?[] UserParams;
 
     public string?[]? UserParamsTypeNames;
-
-    public string ClassName;
-
-    public string MethodName;
 
     //TODO: use a typed userParams object to avoid losing null object types?
     public ManagedRemoteInfo(int remoteProcessId, string channelName, string userLibrary, string className, string methodName, params object?[] userParams)
     {
         ChannelName = channelName;
         UserLibrary = userLibrary;
-        UserLibraryName = AssemblyName.GetAssemblyName(userLibrary).FullName;
         RemoteProcessId = remoteProcessId;
-        UserParams = userParams;
-        UserParamsTypeNames = userParams?.Select(param => param?.GetType().AssemblyQualifiedName).ToArray();
         ClassName = className;
         MethodName = methodName;
+        UserParams = userParams;
+        UserParamsTypeNames = userParams?.Select(param => param?.GetType().AssemblyQualifiedName).ToArray();
     }
 }
