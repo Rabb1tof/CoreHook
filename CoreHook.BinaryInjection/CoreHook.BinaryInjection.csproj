@@ -27,15 +27,18 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x86\CoreHook.NativeHost32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\CoreHook.NativeHost64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x86\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <Target BeforeTargets="Build" Name="BuildNativeHost" Label="CoreHook.NativeHost Build">
     <Message Text="Force build CoreHook.NativeHost (x64)" Importance="High" />
     <MSBuild Projects="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj" Properties="Platform=x64" />
-    <Copy SourceFiles="..\CoreHook.NativeHost\bin\$(Configuration)\x64\CoreHook.NativeHost64.dll" DestinationFolder="$(OutDir)\\x64" />
-    <Copy SourceFiles="..\CoreHook.NativeHost\bin\$(Configuration)\x64\nethost.dll" DestinationFolder="$(OutDir)\\x64" />
     <Message Text="Force build CoreHook.NativeHost (x86/win32)" Importance="High" />
     <MSBuild Projects="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj" Properties="Platform=Win32" />
-    <Copy SourceFiles="..\CoreHook.NativeHost\bin\$(Configuration)\x86\CoreHook.NativeHost32.dll" DestinationFolder="$(OutDir)\\x86" />
-    <Copy SourceFiles="..\CoreHook.NativeHost\bin\$(Configuration)\x86\nethost.dll" DestinationFolder="$(OutDir)\\x86" />
   </Target>
   
 </Project>
