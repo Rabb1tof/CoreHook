@@ -2,7 +2,6 @@
 using CoreHook.Extensions;
 using CoreHook.FileMonitor.Hook;
 using CoreHook.FileMonitor.Uwp;
-using CoreHook.HookDefinition;
 using CoreHook.IPC.Messages;
 using CoreHook.IPC.NamedPipes;
 using CoreHook.IPC.Platform;
@@ -16,7 +15,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 
@@ -28,6 +26,7 @@ class Program
 {
     private static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddSimpleConsole(conf => conf.SingleLine = true));
     private static readonly ILogger logger = loggerFactory.CreateLogger<Program>();
+    private static List<Process>? hookTargets;
 
     /// <summary>
     /// The library to be injected into the target process and executed using the EntryPoint's 'Run' Method.
@@ -108,7 +107,7 @@ class Program
             throw new InvalidOperationException($"Failed to start or retrieve the executable.");
         }
 
-        List<Process>? hookTargets = new List<Process> { process };
+        hookTargets = new List<Process> { process };
         var children = process.GetChildProcesses();
         if (children.Any())
         {
@@ -117,7 +116,12 @@ class Program
             var processesTable = new Table();
             processesTable.AddColumn("ID");
             processesTable.AddColumn("Name");
-            children.ForEach(child => processesTable.AddRow(child.Id.ToString(), child.ProcessName));
+            children.ForEach(child =>
+            {
+                child.EnableRaisingEvents = true;
+                child.Exited += Process_Exited;
+                processesTable.AddRow(child.Id.ToString(), child.ProcessName);
+            });
             Console.Write(processesTable);
 
             if (Console.Confirm("Would you like to hook to those as well?"))
@@ -127,10 +131,16 @@ class Program
         }
 
         process.EnableRaisingEvents = true;
-        process.Exited += (o, e) => { logger.LogInformation("Process has been closed. Exiting."); Environment.Exit(0); };
+        process.Exited += Process_Exited;
 
-        foreach (var target in hookTargets)
+        foreach (var target in hookTargets.ToArray())
         {
+            if (target.HasExited)
+            {
+                logger.LogInformation($"Process {target.Id} has exited already, skipping.");
+                continue;
+            }
+
             string pipeName = PIPE_NAME_BASE + target.Id;
 
             var isUwp = target.IsPackagedApp(out string pname);
@@ -162,8 +172,25 @@ class Program
         }
 
         logger.LogInformation("Injection successful.");
-        logger.LogInformation("Waiting for messages... (press Enter to quit)");
+        logger.LogInformation("Waiting for messages... (press enter to quit)");
         System.Console.ReadLine();
+    }
+
+    private static void Process_Exited(object? sender, EventArgs e)
+    {
+        Process p = (Process)sender!;
+
+        logger.LogInformation($"Process {p.Id} has been closed.");
+        hookTargets!.Remove(p);
+
+        logger.LogInformation($"Remains {hookTargets!.Count} process(es) to watch.");
+
+        if (hookTargets.Count == 0)
+        {
+            logger.LogInformation("No more remaining processes to watch, nothing to do. Press enter to quit.");
+            System.Console.ReadLine();
+            Environment.Exit(0);
+        }
     }
 
     /// <summary>

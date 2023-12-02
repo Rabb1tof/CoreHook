@@ -41,7 +41,7 @@ public class PluginLoader
             var payLoad = JsonSerializer.Deserialize<ManagedRemoteInfo>(payLoadStr, new JsonSerializerOptions() { IncludeFields = true });
 
             // Start the IPC message notifier with a connection to the host application.
-            hostNotifier = new NotificationHelper(payLoad.ChannelName, _logger);
+            hostNotifier = new NotificationHelper(payLoad.InjectionChannelName, _logger);
 
             // Execute the plugin library's entry point and pass in the user arguments.
             var loadPluginTask = LoadPlugin(payLoad, hostNotifier);

@@ -12,5 +12,5 @@ public class HookAttribute : Attribute
 
     public Type DelegateType { get; set; }
 
-    public ulong TargetRelativeAddress { get; set; }
+    public ulong TargetRelativeAddress { get; set; } = 0;
 }

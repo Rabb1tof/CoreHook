@@ -49,7 +49,7 @@ public static class RemoteHook
 
         if (!File.Exists(hookLibrary))
         {
-            throw new FileNotFoundException("File path {hookLibrary} is invalid or file does not exist.", hookLibrary);
+            throw new FileNotFoundException($"File path {hookLibrary} is invalid or file does not exist.");
         }
 
         logger.LogInformation("Hook library '{hookLibrary}' found. Injecting.", hookLibrary);
@@ -59,7 +59,7 @@ public static class RemoteHook
         var corehookPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, targetProcess.Is64Bit() ? CoreHookingModule64 : CoreHookingModule32);
         if (!File.Exists(corehookPath))
         {
-            throw new FileNotFoundException("File path {corehookPath} is invalid or file does not exist.", corehookPath);
+            throw new FileNotFoundException($"File path {corehookPath} is invalid or file does not exist.");
         }
 
         if (targetProcess.IsPackagedApp(out string _))

@@ -49,6 +49,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreHook.BinaryInjection.Te
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreHook.IPC.Tests", "tests\CoreHook.IPC.Tests\CoreHook.IPC.Tests.csproj", "{391E2AA6-7EE9-4B01-9EE5-6F40FB308BFA}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreHook.Generator", "CoreHook.Generator\CoreHook.Generator.csproj", "{8176323C-5A2E-44CF-840F-A992F0C4C628}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -203,6 +205,18 @@ Global
 		{391E2AA6-7EE9-4B01-9EE5-6F40FB308BFA}.Release|x64.Build.0 = Release|Any CPU
 		{391E2AA6-7EE9-4B01-9EE5-6F40FB308BFA}.Release|x86.ActiveCfg = Release|Any CPU
 		{391E2AA6-7EE9-4B01-9EE5-6F40FB308BFA}.Release|x86.Build.0 = Release|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Debug|x64.Build.0 = Debug|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Debug|x86.Build.0 = Debug|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Release|x64.ActiveCfg = Release|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Release|x64.Build.0 = Release|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Release|x86.ActiveCfg = Release|Any CPU
+		{8176323C-5A2E-44CF-840F-A992F0C4C628}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
