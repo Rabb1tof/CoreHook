@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -142,7 +143,7 @@ public partial class {classdecl.Key.Identifier.ValueText} {{";
     [Hook(TargetDllName = ""{targetDllName}"", TargetMethod = ""{targetMethod ?? "null"}"", TargetRelativeAddress = {targetRelativeAddress.ToString("x")}, Description = ""{description}"", DelegateType = typeof({meth.Identifier.ValueText}Delegate))]
     public {meth.ReturnType} {meth.Identifier.ValueText}Hook{meth.ParameterList} 
     {{
-        return {meth.Identifier.ValueText}({String.Join(", ", meth.ParameterList.Parameters.Select(param => param.Identifier))});
+        return {meth.Identifier.ValueText}({String.Join(", ", paramsAsArgs(meth))});
     }}
 ";
             }
@@ -151,5 +152,13 @@ public partial class {classdecl.Key.Identifier.ValueText} {{";
 
             context.AddSource($"{ns}/{classdecl.Key.Identifier.ValueText}.g.cs", SourceText.From(result, Encoding.UTF8));
         }
+    }
+    private static IEnumerable<string> paramsAsArgs(MethodDeclarationSyntax meth)
+    {
+        foreach (var param in meth.ParameterList.Parameters)
+        {
+            yield return $"{param.Modifiers} {param.Identifier}";
+        }
+
     }
 }
