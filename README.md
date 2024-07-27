@@ -1,7 +1,6 @@
 # CoreHook
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![NuGet](https://img.shields.io/nuget/v/CoreHook.svg?style=flat-square&colorB=f97356)](https://www.nuget.org/packages/CoreHook)
 
 A library that simplifies intercepting application function calls using managed code and the .NET Core runtime. 
 Inspired and based on the great [EasyHook](https://github.com/EasyHook/EasyHook). 
@@ -32,15 +31,7 @@ Since this project is a fork and all initial credits goes to @unknownv2, please 
 
 I kept them here unmodified:
 
-If the project has helped you in any way and you want to give back, consider donating to great organizations such as [Black Girls Code](http://www.blackgirlscode.com/donations.html) and [Hack the Hood](https://www.hackthehood.org/donate.html), or volunteering at others like [The Hidden Genius Project](http://www.hiddengeniusproject.org/upcoming-volunteer-opportunities/).
-
-# Build status
-
-| Build server    | Platform           | Build status                                                                                                                                                                    |
-| --------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AppVeyor        | Windows     | [![Build status](https://ci.appveyor.com/api/projects/status/kj3n6vwax0ds9k2k?svg=true)](https://ci.appveyor.com/project/unknownv2/corehook)                                    |
-| Azure Pipelines | Linux, Windows     | [![Build Status](https://unknowndev.visualstudio.com/CoreHook/_apis/build/status/CoreHook/CoreHook)](https://unknowndev.visualstudio.com/CoreHook/_build/latest?definitionId=2) |
-| Travis CI       | Linux              | [![Build Status](https://travis-ci.com/unknownv2/CoreHook.svg?branch=master)](https://travis-ci.com/unknownv2/CoreHook)                                                         |
+If the project has helped you in any way and you want to give back, consider donating to great organizations such as [Black Girls Code](http://www.blackgirlscode.com/donations.html) and [Hack the Hood](https://www.hackthehood.org/donate.html), or volunteering at others like [The Hidden Genius Project](http://www.hiddengeniusproject.org/upcoming-volunteer-opportunities/). 
 
 ## Features
 
@@ -48,8 +39,6 @@ If the project has helped you in any way and you want to give back, consider don
 * Intercept internal functions by address or [name if symbol files are available](#windows-symbol-support)
 * Supports NuGet package references for the plugin libraries 
 * Supports multiple architectures for the plugins
-
-For more information, [see the wiki](https://github.com/unknownv2/CoreHook/wiki).
 
 ## Differences with the original CoreHook project
 
@@ -71,32 +60,9 @@ CoreHook supports application function call interception on various architecture
 | x64           | Windows               |
 | ARM           | Windows 10 IoT Core   |
 
-## Tested Platforms
-
-| Operating System    | Architecture(s)       |
-| ------------------  |:---------------------:|
-| Windows 7 SP1       | x86, x64              |
-| Windows 8.1         | x86, x64              |
-| Windows 10 (Win32)  | x86, x64, ARM         |
-| Windows 10 (UWP)    | x86, x64              |
-| Windows Server 2008 | x86, x64              |
-| Windows Server 2012 | x86, x64              |
-| Windows Server 2016 | x86, x64              |
-| Windows Server 2019 | x86, x64              |
-
 ## Dependencies
 
 * [.NET 5+](https://docs.microsoft.com/en-us/dotnet/core/)
-* [CoreHook.Hooking](https://github.com/unknownv2/CoreHook.Hooking)
-
-## Examples
-
- * [FileMonitor - Universal Windows Platform (UWP)](examples/Uwp/CoreHook.Uwp.FileMonitor/) 
- * [FileMonitor - Windows Desktop Applications (Win32)](examples/Win32/CoreHook.FileMonitor)
-
-## Plugin Examples
-
-* [More examples for the plugins can be found in this repository](https://github.com/unknownv2/corehook-plugins)
 
 ## Usage
 
