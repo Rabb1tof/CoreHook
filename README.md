@@ -2,28 +2,23 @@
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
-A library that simplifies intercepting application function calls using managed code and the .NET Core runtime. 
-Inspired and based on the great [EasyHook](https://github.com/EasyHook/EasyHook). 
+> [!NOTE]
+> This is a fork from [CoreHook](https://github.com/unknownv2/CoreHook) by @unknownv2, adding .NET 5+ compatibility and widly refactoring the sources (I hope the original author won't be upset about it :wink:).
+>
+> _This project name will probably change in a near future, since .NET isn't named Core anymore._
 
-:sparkles: This is a fork from the original [CoreHook](https://github.com/unknownv2/CoreHook) by @unknownv2, adding .NET 5+ compatibility and widly refactoring the sources (I hope the original author won't be upset about it :wink:).
+Here's the original description:
+> A library that simplifies intercepting application function calls using managed code and the .NET Core runtime. 
+>
+> Inspired and based on the great [EasyHook](https://github.com/EasyHook/EasyHook). 
 
-:information_source: _This project name will probably change in a near future, since .NET isn't named Core anymore._
+## Contributing
 
+Any contributions are all welcome! If you find any problems or want to add features, don't hesitate to open a new issue or create a pull request.
 
-## Contents
-- [Donations](#donations)
-- [Build Status](#build-status)
-- [Features](#features)
-- [Supported Platforms](#supported-platforms)
-- [Tested Platforms](#tested-platforms)
-- [Dependencies](#dependencies)
-- [Examples](#examples)
-- [Plugin Examples](#plugin-examples)
-- [Usage](#usage)
-    - [Windows](#windows)
-- [Contributing](#contributing)
-- [License](#license)
-- [Credits](#credits)
+## Credits
+
+Credits go to the same people @unknownv2 mentioned [here](/CREDITS.md) and also to himself. While I deeply modified (not to say "improved") his code, I wouldn't have been able to do that without his project!
 
 # Donations
 
@@ -62,7 +57,7 @@ CoreHook supports application function call interception on various architecture
 
 ## Dependencies
 
-* [.NET 5+](https://docs.microsoft.com/en-us/dotnet/core/)
+* [.NET 7+](https://docs.microsoft.com/en-us/dotnet/core/)
 
 ## Usage
 
@@ -84,12 +79,8 @@ When you build any .NET 5+ application, these files are generated to the output 
 
 You can use the `CoreHook.FileMonitor.runtimeconfig.json` and `CoreHook.FileMonitor.runtimeconfig.dev.json` files found in your build output directory as references for creating the global or local configuration files.
 
-////////////////////////////////////////////////////////////////////////////////
-
-:warning: The following has to be reviewed and hasn't been updated for this fork.
-------------------------------------------------------------------------------
-
-////////////////////////////////////////////////////////////////////////////////
+>  [!WARNING]
+> The following has to be reviewed and hasn't been updated for this fork!
 
 The runtime configuration file should look like the one below, where `additionalProbingPaths` contains file paths the host module can check for additional dependencies. This guide assumes you have installed the `.NET Core 2.2` runtime or SDK for both x86 and x64 architectures.
 
@@ -239,12 +230,3 @@ The `C:\SymbolCache` folder is a local cache directory where symbol files can be
 
 You can confirm that symbol support is properly configured by running the [symbols tests](tests/CoreHook.Tests/Windows/SymbolsTest.cs).
 
-## Contributing
-
-Any contributions are all welcome! If you find any problems or want to add features, don't hesitate to open a new issue or create a pull request.
-
-## License
-
-Licensed under the [MIT](LICENSE) License.
-
-## [Credits](/CREDITS.md)
