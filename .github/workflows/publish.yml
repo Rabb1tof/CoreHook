@@ -24,6 +24,7 @@ jobs:
 
     #Source: https://dusted.codes/github-actions-for-dotnet-core-nuget-packages#drive-nuget-version-from-git-tags
     - name: Set Nuget package version
+      shell: bash
       run: |
         arrTag=(${GITHUB_REF//\// })
         VERSION="${arrTag[2]}"
