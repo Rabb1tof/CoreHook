@@ -22,15 +22,6 @@ jobs:
     - name: Generate documentation (retrieve global tool)
       run: dotnet tool install xmldocmd -g
 
-    - name: Generate documentation (generate)
-      run: xmldocmd CoreHook/bin/Release/CoreHook.dll docs/generated --source https://github.com/${{ github.repository }} --clean
-
-    - name: Generate documentation (commit)
-      uses: EndBug/add-and-commit@v4.1.0
-      with:
-        add: docs
-        message: Automated documentation update
-
     #Source: https://dusted.codes/github-actions-for-dotnet-core-nuget-packages#drive-nuget-version-from-git-tags
     - name: Set Nuget package version
       run: |
@@ -41,6 +32,15 @@ jobs:
 
     - name: Pack
       run: msbuild CoreHook\CoreHook.csproj -p:Configuration=Release -p:PackageVersion=${{ env.PACKAGE_VERSION }} -t:Pack
+
+    - name: Generate documentation (generate)
+      run: xmldocmd CoreHook/bin/Release/CoreHook.dll docs/generated --source https://github.com/${{ github.repository }} --clean
+
+    - name: Generate documentation (commit)
+      uses: EndBug/add-and-commit@v4.1.0
+      with:
+        add: docs
+        message: Automated documentation update
 
     - name: Publish
       run: dotnet nuget push CoreHook/bin/Release/Wokhan.CoreHook.${{ env.PACKAGE_VERSION }}.nupkg --api-key ${{ secrets.nuget_apikey }} --source https://api.nuget.org/v3/index.json
