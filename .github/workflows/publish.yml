@@ -32,7 +32,7 @@ jobs:
         echo "PACKAGE_VERSION=$VERSION" >> $GITHUB_ENV
 
     - name: Pack
-      run: msbuild CoreHook\CoreHook.csproj -p:Configuration=Release -p:PackageVersion=${{ env.PACKAGE_VERSION }} -t:Pack
+      run: msbuild CoreHook\CoreHook.csproj -p:Configuration=Release -p:PackageVersion=${{ env.PACKAGE_VERSION }} -t:Restore,Build,Pack
 
     - name: Generate documentation (generate)
       run: xmldocmd CoreHook/bin/Release/CoreHook.dll docs/generated --source https://github.com/${{ github.repository }} --clean
