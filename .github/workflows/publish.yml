@@ -6,7 +6,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v2
@@ -15,15 +15,9 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 7.0.x
-        
-    - name: Install dependencies
-      run: dotnet restore
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-
-    #- name: Test
-    #  run: dotnet test --configuration Release --no-build --no-restore --verbosity normal
+    - name: Setup msbuild
+      uses: microsoft/setup-msbuild@v2
 
     - name: Generate documentation (retrieve global tool)
       run: dotnet tool install xmldocmd -g
@@ -46,7 +40,7 @@ jobs:
         echo "PACKAGE_VERSION=$VERSION" >> $GITHUB_ENV
 
     - name: Pack
-      run: dotnet pack --no-build --no-restore --output CoreHook/bin/Release/ --configuration Release -p:PackageVersion=${{ env.PACKAGE_VERSION }} -p:PackageID=Wokhan.CoreHook
+      run: msbuild CoreHook\CoreHook.csproj -p:Configuration=Release -p:PackageVersion=${{ env.PACKAGE_VERSION }} -t:Pack
 
     - name: Publish
       run: dotnet nuget push CoreHook/bin/Release/Wokhan.CoreHook.${{ env.PACKAGE_VERSION }}.nupkg --api-key ${{ secrets.nuget_apikey }} --source https://api.nuget.org/v3/index.json
