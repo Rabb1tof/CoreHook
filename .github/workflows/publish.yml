@@ -23,7 +23,7 @@ jobs:
       run: dotnet tool install xmldocmd -g
 
     - name: Generate documentation (generate)
-      run: xmldocmd CoreHook/bin/Release/net7.0/CoreHook.dll docs/generated --source https://github.com/${{ github.repository }} --clean
+      run: xmldocmd CoreHook/bin/Release/CoreHook.dll docs/generated --source https://github.com/${{ github.repository }} --clean
 
     - name: Generate documentation (commit)
       uses: EndBug/add-and-commit@v4.1.0
