@@ -80,6 +80,10 @@
       <ExcludeAssets>All</ExcludeAssets>
     </PackageReference>
   </ItemGroup>
+  <PropertyGroup Label="Manuel packages paths (fix for GitHub actions)">
+    <PkgMicrosoft_NETCore_App_Host_win-x86 Condition="'$(PkgMicrosoft_NETCore_App_Host_win-x86)'==''">$(NuGetPackageRoot)\microsoft.netcore.app.host.win-x86\7.0.20</PkgMicrosoft_NETCore_App_Host_win-x86>
+    <PkgMicrosoft_NETCore_App_Host_win-x64 Condition="'$(PkgMicrosoft_NETCore_App_Host_win-x64)'==''">$(NuGetPackageRoot)\microsoft.netcore.app.host.win-x86\7.0.20</PkgMicrosoft_NETCore_App_Host_win-x64>
+  </PropertyGroup>
   <ItemDefinitionGroup Label="Defaults">
     <Link>
       <SubSystem>Windows</SubSystem>

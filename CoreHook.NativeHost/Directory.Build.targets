@@ -1,3 +1,0 @@
-<Project>  
-  <Import Project="$(MSBuildProjectExtensionsPath)$(MSBuildProjectFile).*.props" />
-</Project>
