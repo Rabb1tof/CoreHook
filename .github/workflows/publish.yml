@@ -30,9 +30,13 @@ jobs:
         VERSION="${arrTag[2]}"
         VERSION="${VERSION//v}"
         echo "PACKAGE_VERSION=$VERSION" >> $GITHUB_ENV
+    
+    # Restore packages independently (for the whole solution) to ensure properties are created by GeneratePathProperties ; if not they are generated but too late
+    - name: Restore Nuget packages
+      run: msbuild -t:Restore
 
     - name: Pack
-      run: msbuild CoreHook\CoreHook.csproj -p:Configuration=Release -p:PackageVersion=${{ env.PACKAGE_VERSION }} -t:Restore,Build,Pack
+      run: msbuild CoreHook\CoreHook.csproj -p:Configuration=Release -p:PackageVersion=${{ env.PACKAGE_VERSION }} -t:Pack
 
     - name: Generate documentation (generate)
       run: xmldocmd CoreHook/bin/Release/CoreHook.dll docs/generated --source https://github.com/${{ github.repository }} --clean

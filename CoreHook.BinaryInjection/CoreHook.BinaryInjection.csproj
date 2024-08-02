@@ -29,10 +29,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\CoreHook.NativeHost\bin\$(Configuration)\x86\CoreHook.NativeHost32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
-    <Content Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\CoreHook.NativeHost64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
-    <Content Include="..\CoreHook.NativeHost\bin\$(Configuration)\x86\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
-    <Content Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x86\CoreHook.NativeHost32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\CoreHook.NativeHost64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x86\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
+    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
   </ItemGroup>
 
   <Target BeforeTargets="Compile" Name="BuildNativeHost" Label="CoreHook.NativeHost Build">

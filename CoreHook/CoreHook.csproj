@@ -12,7 +12,7 @@
 
   <PropertyGroup Label="Nuget" Condition="'$(Configuration)' == 'Release'">
     <Product>CoreHook</Product>
-    <Version>1.0.1</Version>
+    <Version>1.0.0</Version>
     <RepositoryUrl>https://github.com/wokhan/CoreHook.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -57,20 +57,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Native\corehook32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" />
-    <None Include="Native\corehook64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\CoreHook.BinaryInjection\CoreHook.BinaryInjection.csproj" PrivateAssets="All" />
     <ProjectReference Include="..\CoreHook.IPC\CoreHook.IPC.csproj" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\CoreHook.NativeHost\bin\$(Configuration)\x86\CoreHook.NativeHost32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" Pack="True" PackagePath="lib\$(TargetFramework)\x86" />
-    <Content Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\CoreHook.NativeHost64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" Pack="True" PackagePath="lib\$(TargetFramework)\x64" />
-    <Content Include="..\CoreHook.NativeHost\bin\$(Configuration)\x86\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" Pack="True" PackagePath="lib\$(TargetFramework)\x86" />
-    <Content Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" Pack="True" PackagePath="lib\$(TargetFramework)\x64" />
+    <None Include="Native\corehook32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" Pack="True" PackagePath="lib\$(TargetFramework)\x86" />
+    <None Include="Native\corehook64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" Pack="True" PackagePath="lib\$(TargetFramework)\x64" />
+  </ItemGroup>
+
+  <ItemGroup Label="Additional dependencies to include in the Nuget package">
+    <None Include="$(OutDir)\x86\CoreHook.NativeHost32.dll" Visible="False" Pack="True" />
+    <None Include="$(OutDir)\x64\CoreHook.NativeHost64.dll" Visible="False" Pack="True" />
+    <None Include="$(OutDir)\x86\nethost.dll" Visible="False" Pack="True" />
+    <None Include="$(OutDir)\x64\nethost.dll" Visible="False" Pack="True" />
   </ItemGroup>
 
   <ItemGroup>
