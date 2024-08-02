@@ -57,8 +57,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CoreHook.BinaryInjection\CoreHook.BinaryInjection.csproj" PrivateAssets="All" />
-    <ProjectReference Include="..\CoreHook.IPC\CoreHook.IPC.csproj" PrivateAssets="All" />
+    <ProjectReference Include="..\CoreHook.BinaryInjection\CoreHook.BinaryInjection.csproj" />
+    <ProjectReference Include="..\CoreHook.Generator\CoreHook.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
 
   <ItemGroup>
@@ -67,10 +67,13 @@
   </ItemGroup>
 
   <ItemGroup Label="Additional dependencies to include in the Nuget package">
-    <None Include="$(OutDir)\x86\CoreHook.NativeHost32.dll" Visible="False" Pack="True" />
-    <None Include="$(OutDir)\x64\CoreHook.NativeHost64.dll" Visible="False" Pack="True" />
-    <None Include="$(OutDir)\x86\nethost.dll" Visible="False" Pack="True" />
-    <None Include="$(OutDir)\x64\nethost.dll" Visible="False" Pack="True" />
+    <None Include="$(OutDir)\CoreHook.IPC.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)" />
+    <None Include="$(OutDir)\CoreHook.BinaryInjection.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)" />
+    <None Include="$(OutDir)\CoreHook.Generator.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)" />
+    <None Include="$(OutDir)\x86\CoreHook.NativeHost32.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)\x86" />
+    <None Include="$(OutDir)\x64\CoreHook.NativeHost64.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)\x64" />
+    <None Include="$(OutDir)\x86\nethost.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)\x86" />
+    <None Include="$(OutDir)\x64\nethost.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)\x64" />
   </ItemGroup>
 
   <ItemGroup>
@@ -102,4 +105,5 @@
       <ContentWithTargetPath Include="$(ProjectRuntimeConfigFilePath)" Condition="'$(GenerateRuntimeConfigurationFiles)' == 'true'" CopyToOutputDirectory="PreserveNewest" TargetPath="$(ProjectRuntimeConfigFileName)" />
     </ItemGroup>
   </Target>
+
 </Project>
