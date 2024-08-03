@@ -33,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0" />
     <PackageReference Include="Microsoft.Windows.CsWin32" Version="0.3.2-beta">
       <PrivateAssets>all</PrivateAssets>
@@ -48,6 +49,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\CoreHook\CoreHook.csproj" />
+    <ProjectReference Include="..\..\CoreHook.BinaryInjection\CoreHook.BinaryInjection.csproj" />
     <ProjectReference Include="..\plugins\CoreHook.Tests.ComplexParameterTest\CoreHook.Tests.ComplexParameterTest.csproj" />
     <ProjectReference Include="..\plugins\CoreHook.Tests.SimpleParameterTest\CoreHook.Tests.SimpleParameterTest.csproj" />
   </ItemGroup>

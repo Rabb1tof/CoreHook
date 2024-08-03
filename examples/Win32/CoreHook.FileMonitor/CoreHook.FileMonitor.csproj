@@ -15,6 +15,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\CoreHook\CoreHook.csproj" />
+    <ProjectReference Include="..\..\..\CoreHook.BinaryInjection\CoreHook.BinaryInjection.csproj" />
+    <ProjectReference Include="..\..\..\CoreHook.IPC\CoreHook.IPC.csproj" />
+
     <ProjectReference Include="..\CoreHook.FileMonitor.Hook\CoreHook.FileMonitor.Hook.csproj" />
     <ProjectReference Include="..\CoreHook.Uwp.FileMonitor.Hook\CoreHook.Uwp.FileMonitor.Hook.csproj" />
   </ItemGroup>

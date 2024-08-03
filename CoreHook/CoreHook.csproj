@@ -30,9 +30,9 @@
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://github.com/wokhan/CoreHook</PackageProjectUrl>
     <PackageReleaseNotes>Please check GitHub repository for details.</PackageReleaseNotes>
-    <Description>An upgrade of unknownv2's CoreHook for .NET 5+, which allows to hook into processes with .NET.</Description>
+    <Description>A major upgrade of Thierry Bizimungu's CoreHook for .NET 6+, which allows to hook into processes with .NET.</Description>
     <Authors>Thierry Bizimungu, Jérôme Saliba</Authors>
-    <Copyright>Copyright (c) 2018 Thierry Bizimungu (@unknownv2) / 2023 Jérôme Saliba (@wokhan)</Copyright>
+    <Copyright>Copyright (c) 2018 Thierry Bizimungu (@unknownv2) / 2023-2024 Jérôme Saliba (@wokhan)</Copyright>
     <Company>Wokhan Solutions</Company>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
@@ -57,24 +57,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CoreHook.BinaryInjection\CoreHook.BinaryInjection.csproj" />
-    <ProjectReference Include="..\CoreHook.Generator\CoreHook.Generator.csproj" OutputItemType="Analyzer" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Native\corehook32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" Pack="True" PackagePath="lib\$(TargetFramework)\x86" />
-    <None Include="Native\corehook64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" Pack="True" PackagePath="lib\$(TargetFramework)\x64" />
+    <ProjectReference Include="..\CoreHook.BinaryInjection\CoreHook.BinaryInjection.csproj" PrivateAssets="All" />
+    <ProjectReference Include="..\CoreHook.Generator\CoreHook.Generator.csproj" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Label="Additional dependencies to include in the Nuget package">
-    <None Include="$(OutDir)\CoreHook.IPC.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)" />
-    <None Include="$(OutDir)\CoreHook.BinaryInjection.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)" />
-    <None Include="$(OutDir)\CoreHook.Generator.dll" Visible="False" Pack="True" PackagePath="analyzers/dotnet/cs" />
-    
+    <None Include="$(OutDir)\CoreHook.IPC.*" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)" />
+    <None Include="$(OutDir)\CoreHook.BinaryInjection.*" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)" />
+    <None Include="$(OutDir)\CoreHook.Generator.*" Visible="False" Pack="True" PackagePath="analyzers/dotnet/cs" />
+
     <None Include="$(OutDir)\x86\CoreHook.NativeHost32.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)\x86" />
     <None Include="$(OutDir)\x64\CoreHook.NativeHost64.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)\x64" />
     <None Include="$(OutDir)\x86\nethost.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)\x86" />
     <None Include="$(OutDir)\x64\nethost.dll" Visible="False" Pack="True" PackagePath="lib\$(TargetFramework)\x64" />
+
+    <None Include="Native\corehook32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" Pack="True" PackagePath="lib\$(TargetFramework)\x86" />
+    <None Include="Native\corehook64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" Pack="True" PackagePath="lib\$(TargetFramework)\x64" />
   </ItemGroup>
 
   <ItemGroup>
@@ -85,16 +83,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
-  <PropertyGroup>
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
-  </PropertyGroup>
-
-  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
-    <ItemGroup>
-      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference')-&gt;WithMetadataValue('PrivateAssets', 'All'))" />
-    </ItemGroup>
-  </Target>
 
   <!--
       Include deps.json in ContentWithTargetPath so they will be copied to the output folder of projects that reference this one.

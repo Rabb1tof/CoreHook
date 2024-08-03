@@ -4,6 +4,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <MSBuildAllProjects></MSBuildAllProjects>
     <Platforms>AnyCPU</Platforms>
+    <IsPackable>False</IsPackable>
     <Nullable>Enable</Nullable>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

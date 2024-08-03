@@ -13,23 +13,10 @@
     <Copyright>Copyright (c) 2023 Jérôme Saliba (@wokhan)</Copyright>
     <Product>CoreHook</Product>
     <Version>1.0.1</Version>
-    <PackageProjectUrl>https://github.com/wokhan/CoreHook</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/wokhan/CoreHook.git</RepositoryUrl>
-    <PackageLicenseUrl>https://github.com/wokhan/CoreHook/blob/master/LICENSE</PackageLicenseUrl>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <RepositoryType>git</RepositoryType>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <DebugType>portable</DebugType>
-    <IsPackable>true</IsPackable>
-    <IncludeSymbols>true</IncludeSymbols>
-    <IncludeSource>false</IncludeSource>
     <Description>Library for facilitating interprocess communication (IPC).</Description>
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <EmbedUntrackedSources>false</EmbedUntrackedSources>
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
-  
+
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors />

@@ -37,7 +37,7 @@ jobs:
 
     - name: Publish
       run: dotnet nuget push CoreHook/bin/Release/Wokhan.CoreHook.${{ env.PACKAGE_VERSION }}.nupkg --api-key ${{ secrets.nuget_apikey }} --source https://api.nuget.org/v3/index.json
-
+      
     - name: Generate documentation (1/3 - retrieve global tool)
       run: dotnet tool install xmldocmd -g
 
@@ -49,3 +49,4 @@ jobs:
       with:
         add: docs
         message: Automated documentation update
+        default-author: github_actions
