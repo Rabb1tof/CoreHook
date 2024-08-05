@@ -63,7 +63,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CoreHook.BinaryInjection\CoreHook.BinaryInjection.csproj" />
-    <ProjectReference Include="..\CoreHook.Generator\CoreHook.Generator.csproj" />
+    <ProjectReference Include="..\CoreHook.Generator\CoreHook.Generator.csproj" PackFolder="analyzers\dotnet\cs\" />
   </ItemGroup>
 
   <ItemGroup Label="Additional dependencies to include in the Nuget package">
