@@ -1,0 +1,9 @@
+<Project>
+  <PropertyGroup>
+    <DotNetSdkPath>C:\Program Files\dotnet</DotNetSdkPath>
+    <!-- Найдём актуальную версию хоста -->
+    <DotNetHostVersion>7.0.20</DotNetHostVersion>
+    <!-- Определяем переменную, которую вы используете -->
+    <PkgMicrosoft_NETCore_App_Host_win-x64>$(DotNetSdkPath)\packs\Microsoft.NETCore.App.Host.win-x64\$(DotNetHostVersion)</PkgMicrosoft_NETCore_App_Host_win-x64>
+  </PropertyGroup>
+</Project>

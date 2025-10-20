@@ -3,13 +3,18 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <MSBuildAllProjects></MSBuildAllProjects>
-    <Platforms>AnyCPU</Platforms>
+    <Platforms>AnyCPU;x64</Platforms>
     <Nullable>Enable</Nullable>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors />
   </PropertyGroup>
@@ -30,17 +35,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x86\CoreHook.NativeHost32.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" Pack="True" />
     <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\CoreHook.NativeHost64.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" Pack="True" />
-    <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x86\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x86\\%(Filename)%(Extension)" Pack="True" />
     <None Include="..\CoreHook.NativeHost\bin\$(Configuration)\x64\nethost.dll" Visible="False" CopyToOutputDirectory="PreserveNewest" TargetPath="x64\\%(Filename)%(Extension)" Pack="True" />
   </ItemGroup>
 
   <Target BeforeTargets="Compile" Name="BuildNativeHost" Label="CoreHook.NativeHost Build">
     <Message Text="Force build CoreHook.NativeHost (x64)" Importance="High" />
     <MSBuild Projects="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj" Properties="Platform=x64" />
-    <Message Text="Force build CoreHook.NativeHost (x86/win32)" Importance="High" />
-    <MSBuild Projects="..\CoreHook.NativeHost\CoreHook.NativeHost.vcxproj" Properties="Platform=Win32" />
   </Target>
 
 </Project>

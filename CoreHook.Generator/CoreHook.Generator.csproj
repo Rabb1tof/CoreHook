@@ -5,6 +5,7 @@
     <LangVersion>10.0</LangVersion>
     <EnforceExtendedAnalyzerRules>True</EnforceExtendedAnalyzerRules>
     <Nullable>enable</Nullable>
+    <Platforms>AnyCPU;x64</Platforms>
     <!--<IncludeBuildOutput>false</IncludeBuildOutput>-->
   </PropertyGroup>
 
